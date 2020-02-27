@@ -38,7 +38,7 @@ func (o *OctreeNode) Search(position protometry.VectorN) (*OctreeNode, error) {
 		return o.children[pos].Search(position)
 	} else if o.children[pos].position.Dimensions[0] == -1 {
 		// Empty node
-		return nil, nil
+		return nil, ErrtreeFailedToFindNode
 	}
 	eq, err := o.children[pos].position.ApproxEqual(position)
 	if err != nil {
@@ -47,94 +47,9 @@ func (o *OctreeNode) Search(position protometry.VectorN) (*OctreeNode, error) {
 	if eq {
 		return o.children[pos], nil
 	}
-	return nil, nil
+	return nil, ErrtreeFailedToFindNode
 }
 func (o *OctreeNode) Insert(position protometry.VectorN, data []interface{}) error {
-	/*
-		if o.size < 1 {
-			return nil, nil
-		}
-
-		// If this node can host the new node
-		in, err := position.In(*protometry.NewBoxOfSize(*o.position, o.size)) // Hardcoded 1 size
-		// If in failed, return error
-		if err != nil {
-			return nil, err
-		}
-		// Current node is a good fit
-		if in {
-			if o.children[0] == nil {
-				if o.position == nil {
-					o.position
-				}
-
-				eq, err := o.position.ApproxEqual(position)
-
-				// If equal failed, return error
-				if err != nil {
-					return nil, err
-				}
-
-				// Current node is at the wanted position
-				if eq {
-					o.data = append(o.data, data...) // Concat arrays
-					return o, nil
-				}
-
-				// No children
-				if o.children[0] == nil {
-					// Create children
-					subBoxes := protometry.NewBoxOfSize(*o.position, o.size).MakeSubBoxes()
-					for i := 0; i < 8; i++ {
-						o.children[i] = &OctreeNode{position: subBoxes[i].GetCenter(), size: o.size / 8} // size / 8 ?
-					}
-				}
-				// Try to insert in the branch corresponding to the position
-				return o.children[o.findBranch(position)].Insert(position, data)
-			}
-		}
-	*/
-
-	// TODO: move node rebalance
-	/*
-		if o == nil {
-			return nil, nil
-		}
-
-		if o.children[0] == nil {
-			if o.position != nil {
-				eq, err := o.position.ApproxEqual(position)
-
-				// If equal failed, return error
-				if err != nil {
-					return nil, err
-				}
-
-				// Current node is at the wanted position
-				if eq {
-					o.data = append(o.data, data...) // Concat arrays
-					return o, nil
-				}
-				subBoxes := protometry.NewBoxOfSize(*o.position, o.region.GetSize()).MakeSubBoxes()
-
-				// We have a position
-				for i := 0; i < 8; i++ {
-					o.children[i] = &OctreeNode{position: nil, region: subBoxes[i]}
-				}
-			} else {
-				// Leaf with no position
-				o.position = &position
-				o.data = data
-			}
-		}
-
-		if o.position == nil {
-			return nil, nil
-		}
-		// Try to insert in the branch corresponding to the position
-		return o.children[o.findBranch(position)].Insert(position, data)
-	*/
-
 	// Find the proper direction to insert
 	branch := o.findBranch(position)
 
@@ -172,8 +87,15 @@ func (o *OctreeNode) Insert(position protometry.VectorN, data []interface{}) err
 	return nil
 }
 
-func (o *OctreeNode) Remove(position protometry.VectorN) (bool, error) {
-	return false, nil
+func (o *OctreeNode) Remove(position protometry.VectorN) error {
+	n, err := o.Search(position)
+	if err != nil {
+		return err
+	}
+	if n != nil {
+		*n = *NewEmptyOctreeNode()
+	}
+	return nil
 }
 
 const (
@@ -308,6 +230,20 @@ func (o *OctreeNode) findPosition(branch int, region protometry.Box) *OctreeNode
 				region.GetMax().Dimensions[2])))
 	}
 	return newNode
+}
+
+func (o *OctreeNode) getOctant(position *protometry.VectorN) int {
+	oct := 0
+	if position.Dimensions[0] >= o.position.Dimensions[0] {
+		oct |= 4
+	}
+	if position.Dimensions[1] >= o.position.Dimensions[1] {
+		oct |= 2
+	}
+	if position.Dimensions[2] >= o.position.Dimensions[2] {
+		oct |= 1
+	}
+	return oct
 }
 
 // ToString Get a human readable representation of the state of

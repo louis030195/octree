@@ -42,7 +42,15 @@ func (o *Octree) Insert(position protometry.VectorN, data []interface{}) error {
 
 	return o.root.Insert(position, data)
 }
-func (o *Octree) Remove(position protometry.VectorN) (bool, error) {
+func (o *Octree) Remove(position protometry.VectorN) error {
+	in, err := position.In(*o.root.region)
+	if err != nil {
+		return err
+	}
+	if !in {
+		return ErrtreeOutsideBounds
+	}
+
 	return o.root.Remove(position)
 }
 
