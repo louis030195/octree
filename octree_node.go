@@ -2,6 +2,7 @@ package octree
 
 import (
 	"fmt"
+	"math"
 
 	"github.com/The-Tensox/protometry"
 )
@@ -14,7 +15,7 @@ type OctreeNode struct {
 }
 
 func NewEmptyOctreeNode() *OctreeNode {
-	return &OctreeNode{position: protometry.NewVectorN(-1, -1, -1)}
+	return &OctreeNode{position: protometry.NewVectorN(math.MaxFloat64, math.MaxFloat64, math.MaxFloat64)}
 }
 
 func NewPointOctreeNode(position *protometry.VectorN, data []interface{}) *OctreeNode {
@@ -32,11 +33,11 @@ func NewRegionOctreeNode(region *protometry.Box) *OctreeNode {
 }
 
 func (o *OctreeNode) Search(position protometry.VectorN) (*OctreeNode, error) {
-	pos := o.findBranch(position)
+	pos := o.getOctant(position)
 	if o.children[pos].position == nil {
 		// Region node
 		return o.children[pos].Search(position)
-	} else if o.children[pos].position.Dimensions[0] == -1 {
+	} else if o.children[pos].position.Dimensions[0] == math.MaxFloat64 {
 		// Empty node
 		return nil, ErrtreeFailedToFindNode
 	}
@@ -51,14 +52,14 @@ func (o *OctreeNode) Search(position protometry.VectorN) (*OctreeNode, error) {
 }
 func (o *OctreeNode) Insert(position protometry.VectorN, data []interface{}) error {
 	// Find the proper direction to insert
-	branch := o.findBranch(position)
-
-	// Two point on same position
+	branch := o.getOctant(position)
+	// There is already a leaf there
 	if o.children[branch].position != nil {
 		eq, err := o.children[branch].position.ApproxEqual(position)
 		if err != nil {
 			return err
 		}
+		// Two point on same position
 		if eq {
 			o.children[branch].data = append(o.children[branch].data, data...)
 			return nil
@@ -68,9 +69,10 @@ func (o *OctreeNode) Insert(position protometry.VectorN, data []interface{}) err
 	if o.children[branch].position == nil {
 		// If region node, insert in a child
 		return o.children[branch].Insert(position, data)
-	} else if o.children[branch].position.Dimensions[0] == -1 {
+	} else if o.children[branch].position.Dimensions[0] == math.MaxFloat64 {
 		// If empty node, create node with new data on this leaf
 		o.children[branch] = NewPointOctreeNode(&position, data)
+		return nil
 	} else {
 		// If point node, store its data, make it region node,
 		// move stored data down to children
@@ -78,13 +80,13 @@ func (o *OctreeNode) Insert(position protometry.VectorN, data []interface{}) err
 		p := *o.children[branch].position
 		d := o.children[branch].data
 		// Make it region node
-		o.children[branch] = o.findPosition(branch, *o.region)
+		o.children[branch] = o.getNewRegion(branch)
 		// Find new leaf for old node
-		o.children[branch].Insert(p, d)
+		oldBranch := o.getOctant(p)
+		o.children[oldBranch].Insert(p, d)
 		// Find leaf for new node
 		return o.children[branch].Insert(position, data)
 	}
-	return nil
 }
 
 func (o *OctreeNode) Remove(position protometry.VectorN) error {
@@ -109,138 +111,105 @@ const (
 	BLB        // bottom left back
 )
 
-func (o *OctreeNode) findBranch(position protometry.VectorN) int {
-	var pos int
-	center := o.region.GetCenter()
-	if position.Dimensions[0] <= center.Dimensions[0] {
-		if position.Dimensions[1] <= center.Dimensions[1] {
-			if position.Dimensions[2] <= center.Dimensions[2] {
-				pos = TLF
-			} else {
-				pos = TLB
-			}
-		} else {
-			if position.Dimensions[2] <= center.Dimensions[2] {
-				pos = BLF
-			} else {
-				pos = BLB
-			}
-		}
-	} else {
-		if position.Dimensions[1] <= center.Dimensions[1] {
-			if position.Dimensions[2] <= center.Dimensions[2] {
-				pos = TRF
-			} else {
-				pos = TRB
-			}
-		} else {
-			if position.Dimensions[2] <= center.Dimensions[2] {
-				pos = BRF
-			} else {
-				pos = BRB
-			}
-		}
-	}
-	return pos
-}
-
-func (o *OctreeNode) findPosition(branch int, region protometry.Box) *OctreeNode {
-	center := region.GetCenter()
+func (o *OctreeNode) getNewRegion(branch int) *OctreeNode {
+	minD := o.region.GetMin().Dimensions
+	maxD := o.region.GetMax().Dimensions
 	var newNode *OctreeNode
 	switch branch {
 	case TLF:
 		newNode = NewRegionOctreeNode(protometry.NewBox(
 			*protometry.NewVectorN(
-				region.GetMin().Dimensions[0],
-				region.GetMin().Dimensions[1],
-				region.GetMin().Dimensions[2]),
+				minD[0],
+				minD[1],
+				minD[2]),
 			*protometry.NewVectorN(
-				center.Dimensions[0],
-				center.Dimensions[1],
-				center.Dimensions[2])))
+				maxD[0]/2,
+				maxD[1]/2,
+				maxD[2]/2)))
 	case TRF:
 		newNode = NewRegionOctreeNode(protometry.NewBox(
 			*protometry.NewVectorN(
-				center.Dimensions[0]+1,
-				region.GetMin().Dimensions[1],
-				region.GetMin().Dimensions[2]),
+				maxD[0]/2,
+				minD[1],
+				minD[2]),
 			*protometry.NewVectorN(
-				region.GetMax().Dimensions[0],
-				center.Dimensions[1],
-				center.Dimensions[2])))
+				maxD[0],
+				maxD[1]/2,
+				maxD[2]/2)))
 	case BRF:
 		newNode = NewRegionOctreeNode(protometry.NewBox(
 			*protometry.NewVectorN(
-				center.Dimensions[0]+1,
-				center.Dimensions[1]+1,
-				region.GetMin().Dimensions[2]),
+				maxD[0]/2,
+				maxD[1]/2,
+				minD[2]),
 			*protometry.NewVectorN(
-				region.GetMax().Dimensions[0],
-				region.GetMax().Dimensions[1],
-				center.Dimensions[2])))
+				maxD[0],
+				maxD[1],
+				maxD[2]/2)))
 	case BLF:
 		newNode = NewRegionOctreeNode(protometry.NewBox(
 			*protometry.NewVectorN(
-				region.GetMin().Dimensions[0],
-				center.Dimensions[1]+1,
-				region.GetMin().Dimensions[2]),
+				minD[0],
+				maxD[1]/2,
+				minD[2]),
 			*protometry.NewVectorN(
-				center.Dimensions[0],
-				region.GetMax().Dimensions[1],
-				center.Dimensions[2])))
+				maxD[0]/2,
+				maxD[1],
+				maxD[2]/2)))
 	case TLB:
 		newNode = NewRegionOctreeNode(protometry.NewBox(
 			*protometry.NewVectorN(
-				region.GetMin().Dimensions[0],
-				region.GetMin().Dimensions[1],
-				center.Dimensions[2]+1),
+				minD[0],
+				minD[1],
+				maxD[2]/2),
 			*protometry.NewVectorN(
-				center.Dimensions[0],
-				center.Dimensions[1],
-				region.GetMax().Dimensions[2])))
+				maxD[0]/2,
+				maxD[1]/2,
+				maxD[2])))
 	case TRB:
 		newNode = NewRegionOctreeNode(protometry.NewBox(
 			*protometry.NewVectorN(
-				center.Dimensions[0]+1,
-				region.GetMin().Dimensions[1],
-				center.Dimensions[2]+1),
+				maxD[0]/2,
+				minD[1],
+				maxD[2]/2),
 			*protometry.NewVectorN(
-				region.GetMax().Dimensions[0],
-				center.Dimensions[1],
-				region.GetMax().Dimensions[2])))
+				maxD[0],
+				maxD[1]/2,
+				maxD[2])))
 	case BRB:
 		newNode = NewRegionOctreeNode(protometry.NewBox(
 			*protometry.NewVectorN(
-				center.Dimensions[0]+1,
-				center.Dimensions[1]+1,
-				center.Dimensions[2]+1),
+				maxD[0]/2,
+				maxD[1]/2,
+				maxD[2]/2),
 			*protometry.NewVectorN(
-				region.GetMax().Dimensions[0],
-				region.GetMax().Dimensions[1],
-				region.GetMax().Dimensions[2])))
+				maxD[0],
+				maxD[1],
+				maxD[2])))
 	case BLB:
 		newNode = NewRegionOctreeNode(protometry.NewBox(
 			*protometry.NewVectorN(
-				region.GetMin().Dimensions[0],
-				center.Dimensions[1]+1,
-				center.Dimensions[2]+1),
+				minD[0],
+				maxD[1]/2,
+				maxD[2]/2),
 			*protometry.NewVectorN(
-				center.Dimensions[0],
-				region.GetMax().Dimensions[1],
-				region.GetMax().Dimensions[2])))
+				maxD[0]/2,
+				maxD[1],
+				maxD[2])))
 	}
 	return newNode
 }
 
-func (o *OctreeNode) getOctant(position *protometry.VectorN) int {
-	oct := 0
-	if position.Dimensions[0] >= o.position.Dimensions[0] {
+func (o *OctreeNode) getOctant(position protometry.VectorN) int {
+	oct := 0 // Not sure this func is correct
+	center := o.region.GetCenter()
+	if position.Dimensions[0] > center.Dimensions[0] {
 		oct |= 4
 	}
-	if position.Dimensions[1] >= o.position.Dimensions[1] {
+	if position.Dimensions[1] > center.Dimensions[1] {
 		oct |= 2
 	}
-	if position.Dimensions[2] >= o.position.Dimensions[2] {
+	if position.Dimensions[2] > center.Dimensions[2] {
 		oct |= 1
 	}
 	return oct

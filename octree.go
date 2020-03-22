@@ -11,7 +11,7 @@ type Octree struct {
 
 func NewOctree(region *protometry.Box) *Octree {
 	return &Octree{
-		root: NewRegionOctreeNode(region),
+		root: /*&OctreeNode{position: region.GetCenter(), region: region}, //*/ NewRegionOctreeNode(region),
 	}
 }
 

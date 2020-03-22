@@ -4,13 +4,13 @@
 ## Test
 
 ```bash
-go test -v github.com/The-Tensox/octree
+go test -v .
 ```
 
 ## Benchmark
 
 ```bash
-go test -benchmem -run github.com/The-Tensox/octree -bench . -benchtime 0.2s
+go test -benchmem -run . -bench . -benchtime 0.2s
 ```
 
 > BenchmarkOctreeNode_Insert-8         231           1656908 ns/op          944112 B/op      20360 allocs/op

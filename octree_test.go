@@ -27,14 +27,15 @@ func TestOctree_NewOctree(t *testing.T) {
 
 func TestOctreeNode_Insert(t *testing.T) {
 	o := NewOctree(protometry.NewBox(*protometry.NewVector3One(), *protometry.NewVectorN(4, 4, 4)))
-	//err := o.Insert(*protometry.NewVectorN(10, 10, 10), []interface{}{})
-	//equals(t, ErrtreeOutsideBounds, err)
-	err := o.Insert(*protometry.NewVectorN(3, 3, 3), []interface{}{1})
+	err := o.Insert(*protometry.NewVectorN(10, 10, 10), []interface{}{})
+	equals(t, ErrtreeOutsideBounds, err)
+	err = o.Insert(*protometry.NewVectorN(3, 3, 3), []interface{}{1})
 	equals(t, nil, err)
 	err = o.Insert(*protometry.NewVectorN(3, 3, 4), []interface{}{2})
 	equals(t, nil, err)
 	err = o.Insert(*protometry.NewVectorN(3, 4, 4), []interface{}{3})
 
+	// Infinite recursion ...
 	err = o.Insert(*protometry.NewVectorN(4, 4, 4), []interface{}{4})
 	equals(t, nil, err)
 	err = o.Insert(*protometry.NewVector3One(), []interface{}{1})
@@ -84,7 +85,7 @@ func TestOctreeNode_Search(t *testing.T) {
 	equals(t, nil, err)
 
 	// New octree
-	size := 1000.
+	size := 100.
 	o = NewOctree(protometry.NewBoxOfSize(*protometry.NewVector3Zero(), size))
 	for i := 0.; i < size; i++ {
 		for j := 0.; j < size; j++ {
@@ -112,13 +113,23 @@ func TestOctreeNode_Remove(t *testing.T) {
 	equals(t, ErrtreeFailedToFindNode, err)
 }
 
-func TestOctreeNode_findBranch(t *testing.T) {
+func TestOctreeNode_getOctant(t *testing.T) {
 	o := NewOctree(protometry.NewBoxOfSize(*protometry.NewVector3Zero(), 1))
-	t.Log(o.root.findBranch(*protometry.NewVector3One()))
-	t.Log(o.root.findBranch(*protometry.NewVector3Zero()))
-	t.Log(o.root.findBranch(*protometry.NewVector3One().Mul(0.1)))
-	t.Log(o.root.findBranch(*protometry.NewVector3One().Mul(-1)))
+	o.root.position = protometry.NewVector3Zero()
+	t.Log(o.root.getOctant(*protometry.NewVector3One()))
+	t.Log(o.root.getOctant(*protometry.NewVector3Zero()))
+	t.Log(o.root.getOctant(*protometry.NewVector3One().Mul(0.1)))
+	t.Log(o.root.getOctant(*protometry.NewVector3One().Mul(-1)))
+}
 
+func TestOctreeNode_getNewRegion(t *testing.T) {
+	pos := protometry.NewVector3Zero()
+	o := &OctreeNode{
+		position: pos,
+		region:   protometry.NewBox(*pos, *protometry.NewVectorN(1, 1, 1)),
+	}
+	b := o.getNewRegion(0)
+	equals(t, protometry.NewBox(*protometry.NewVectorN(0, 0, 0), *protometry.NewVectorN(0.5, 0.5, 0.5)), b.region)
 }
 
 func BenchmarkOctreeNode_Insert(b *testing.B) {
