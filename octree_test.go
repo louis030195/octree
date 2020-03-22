@@ -22,7 +22,7 @@ func equals(tb testing.TB, exp, act interface{}) {
 func TestOctree_NewOctree(t *testing.T) {
 	o := NewOctree(protometry.NewBoxOfSize(*protometry.NewVector3Zero(), 1))
 	// Should be [(-1,-1,-1), (1, 1, 1)]
-	equals(t, protometry.NewBox(*protometry.NewVector3One().Mul(-1), *protometry.NewVector3One()), o.root.region)
+	equals(t, *protometry.NewBox(*protometry.NewVector3One().Mul(-1), *protometry.NewVector3One()), o.root.region)
 }
 
 func TestOctreeNode_Insert(t *testing.T) {
@@ -36,7 +36,7 @@ func TestOctreeNode_Insert(t *testing.T) {
 	err = o.Insert(NewPoint(3, 3, 4, r))
 	equals(t, true, err)
 	err = o.Insert(NewPoint(3, 4, 4, r))
-
+	equals(t, true, err)
 	err = o.Insert(NewPoint(4, 4, 4, r))
 	equals(t, true, err)
 	err = o.Insert(NewPoint(1, 1, 1, r))
@@ -57,6 +57,42 @@ func TestOctreeNode_Insert(t *testing.T) {
 			equals(t, true, err)
 		}
 	}
+}
+
+func BenchmarkOctreeNode_Insert(b *testing.B) {
+	b.StartTimer()
+	// New octree
+	size := float64(b.N)
+	o := NewOctree(protometry.NewBoxOfSize(*protometry.NewVector3Zero(), size))
+	var d interface{}
+	d = 0
+	for i := 0.; i < size; i++ {
+		for j := 0.; j < size; j++ {
+			o.Insert(NewPoint(i, j, i, d))
+		}
+	}
+	b.StopTimer()
+}
+
+func TestOctreeNode_Range(t *testing.T) {
+	o := NewOctree(protometry.NewBox(*protometry.NewVector3One(), *protometry.NewVectorN(4, 4, 4)))
+	var r interface{}
+	r = 0
+	err := o.Insert(NewPoint(10, 10, 10, r))
+	equals(t, false, err)
+	err = o.Insert(NewPoint(3, 3, 3, r))
+	equals(t, true, err)
+	err = o.Insert(NewPoint(3, 3, 4, r))
+	equals(t, true, err)
+	err = o.Insert(NewPoint(3, 4, 4, r))
+	points := o.Range(*protometry.NewBox(*protometry.NewVector3One(), *protometry.NewVectorN(4, 4, 4)))
+	equals(t, 3, len(points))
+	points = o.Range(*protometry.NewBox(*protometry.NewVector3One(), *protometry.NewVectorN(3, 3, 3)))
+	equals(t, 1, len(points))
+	points = o.Range(*protometry.NewBox(*protometry.NewVector3One(), *protometry.NewVectorN(3, 3, 4)))
+	equals(t, 2, len(points))
+	points = o.Range(*protometry.NewBox(*protometry.NewVector3One(), *protometry.NewVectorN(3, 4, 4)))
+	equals(t, 3, len(points))
 }
 
 /*
@@ -138,18 +174,7 @@ func TestOctreeNode_getNewRegion(t *testing.T) {
 	equals(t, protometry.NewBox(*protometry.NewVectorN(0, 0, 0), *protometry.NewVectorN(0.5, 0.5, 0.5)), b.region)
 }
 
-func BenchmarkOctreeNode_Insert(b *testing.B) {
-	b.StartTimer()
-	// New octree
-	size := float64(b.N)
-	o := NewOctree(protometry.NewBoxOfSize(*protometry.NewVector3Zero(), size))
-	for i := 0.; i < size; i++ {
-		for j := 0.; j < size; j++ {
-			o.Insert(*protometry.NewVectorN(i, j, i), []interface{}{0})
-		}
-	}
-	b.StopTimer()
-}
+
 
 func BenchmarkOctreeNode_Search(b *testing.B) {
 	size := float64(b.N)

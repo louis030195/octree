@@ -42,10 +42,7 @@ type OctreeNode struct {
 func (o *OctreeNode) Insert(point Point) bool {
 	// First case
 	in, err := point.position.In(o.region)
-	if err != nil {
-		return false
-	}
-	if !in {
+	if err != nil || !in {
 		return false
 	}
 
@@ -79,6 +76,38 @@ func (o *OctreeNode) Insert(point Point) bool {
 	return false
 }
 
+// Range find all points that appear within a region
+func (o *OctreeNode) Range(region protometry.Box) []Point {
+	// Prepare an array of results
+	var points []Point
+
+	// Automatically abort if the range does not intersect this
+	intersect, err := o.region.Intersects(region)
+	if err != nil || !intersect {
+		return points // Empty
+	}
+
+	// Check objects at this level
+	for i := range o.points {
+		in, err := o.points[i].position.In(region)
+		if err == nil && in {
+			points = append(points, o.points[i])
+		}
+	}
+
+	// Terminate here, if there are no children
+	if o.children == nil {
+		return points
+	}
+
+	// Otherwise, add the points from the children
+	for i := range o.children {
+		points = append(points, o.children[i].Range(region)...)
+	}
+
+	return points
+}
+
 /*
 func (o *OctreeNode) Search(position protometry.VectorN) (*OctreeNode, error) {
 	pos := o.getOctant(position)
@@ -109,111 +138,9 @@ func (o *OctreeNode) Remove(position protometry.VectorN) error {
 	}
 	return nil
 }
+*/
 
-func (o *OctreeNode) getNewRegion(branch int) *OctreeNode {
-	minD := o.region.GetMin().Dimensions
-	maxD := o.region.GetMax().Dimensions
-	var newNode *OctreeNode
-	switch branch {
-	case TLF:
-		newNode = NewRegionOctreeNode(protometry.NewBox(
-			*protometry.NewVectorN(
-				minD[0],
-				minD[1],
-				minD[2]),
-			*protometry.NewVectorN(
-				maxD[0]/2,
-				maxD[1]/2,
-				maxD[2]/2)))
-	case TRF:
-		newNode = NewRegionOctreeNode(protometry.NewBox(
-			*protometry.NewVectorN(
-				maxD[0]/2,
-				minD[1],
-				minD[2]),
-			*protometry.NewVectorN(
-				maxD[0],
-				maxD[1]/2,
-				maxD[2]/2)))
-	case BRF:
-		newNode = NewRegionOctreeNode(protometry.NewBox(
-			*protometry.NewVectorN(
-				maxD[0]/2,
-				maxD[1]/2,
-				minD[2]),
-			*protometry.NewVectorN(
-				maxD[0],
-				maxD[1],
-				maxD[2]/2)))
-	case BLF:
-		newNode = NewRegionOctreeNode(protometry.NewBox(
-			*protometry.NewVectorN(
-				minD[0],
-				maxD[1]/2,
-				minD[2]),
-			*protometry.NewVectorN(
-				maxD[0]/2,
-				maxD[1],
-				maxD[2]/2)))
-	case TLB:
-		newNode = NewRegionOctreeNode(protometry.NewBox(
-			*protometry.NewVectorN(
-				minD[0],
-				minD[1],
-				maxD[2]/2),
-			*protometry.NewVectorN(
-				maxD[0]/2,
-				maxD[1]/2,
-				maxD[2])))
-	case TRB:
-		newNode = NewRegionOctreeNode(protometry.NewBox(
-			*protometry.NewVectorN(
-				maxD[0]/2,
-				minD[1],
-				maxD[2]/2),
-			*protometry.NewVectorN(
-				maxD[0],
-				maxD[1]/2,
-				maxD[2])))
-	case BRB:
-		newNode = NewRegionOctreeNode(protometry.NewBox(
-			*protometry.NewVectorN(
-				maxD[0]/2,
-				maxD[1]/2,
-				maxD[2]/2),
-			*protometry.NewVectorN(
-				maxD[0],
-				maxD[1],
-				maxD[2])))
-	case BLB:
-		newNode = NewRegionOctreeNode(protometry.NewBox(
-			*protometry.NewVectorN(
-				minD[0],
-				maxD[1]/2,
-				maxD[2]/2),
-			*protometry.NewVectorN(
-				maxD[0]/2,
-				maxD[1],
-				maxD[2])))
-	}
-	return newNode
-}
-
-func (o *OctreeNode) getOctant(position protometry.VectorN) int {
-	oct := 0 // Not sure this func is correct
-	center := o.region.GetCenter()
-	if position.Dimensions[0] > center.Dimensions[0] {
-		oct |= 4
-	}
-	if position.Dimensions[1] > center.Dimensions[1] {
-		oct |= 2
-	}
-	if position.Dimensions[2] > center.Dimensions[2] {
-		oct |= 1
-	}
-	return oct
-}
-
+/*
 // ToString Get a human readable representation of the state of
 // this node and its contents.
 func (o *OctreeNode) ToString() string {
@@ -225,8 +152,7 @@ func (o *OctreeNode) recursiveToString(curIndent, stepIndent string) string {
 
 	// default values
 	childStr := "nil"
-	centerStr := "nil"
-	dataStr := "nil"
+	pointsStr := "nil"
 
 	if o.children != nil {
 		doubleIndent := singleIndent + stepIndent
@@ -240,15 +166,10 @@ func (o *OctreeNode) recursiveToString(curIndent, stepIndent string) string {
 		childStr = fmt.Sprintf("[\n%v%v]", childStr, singleIndent)
 	}
 
-	if o.center != nil {
-		centerStr = o.center.ToString()
+	for _, point := range o.points {
+		pointsStr = pointsStr + fmt.Sprintf("%v%v", singleIndent+stepIndent, point)
 	}
 
-	if o.data != nil {
-		// not stringifying elements since their type is unknown
-		dataStr = fmt.Sprintf("[%d]", len(o.data))
-	}
-
-	return fmt.Sprintf("Node{\n%vcenter: %v,\n%vdata: %v,\n%vregion: %v,\n%vchildren: %v,%v\n%v}", singleIndent, centerStr, singleIndent, dataStr, singleIndent, o.region, singleIndent, childStr, singleIndent, curIndent)
+	return fmt.Sprintf("Node{\n%vregion: %v,\n%vpoints: %v,\n%vchildren: %v,%v\n%v}", singleIndent, o.region, singleIndent, pointsStr, singleIndent, childStr, singleIndent, curIndent)
 }
 */

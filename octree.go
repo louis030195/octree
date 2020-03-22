@@ -19,6 +19,11 @@ func (o *Octree) Insert(point Point) bool {
 	return o.root.Insert(point)
 }
 
+// Range return a list of points found inside the defined region
+func (o *Octree) Range(region protometry.Box) []Point {
+	return o.root.Range(region)
+}
+
 /*
 // Cull ...
 func (o *Octree) Cull(position protometry.VectorN) ([]interface{}, error) {
@@ -49,7 +54,9 @@ func (o *Octree) Remove(position protometry.VectorN) error {
 
 	return o.root.Remove(position)
 }
+*/
 
+/*
 func (o *Octree) ToString() string {
 	return o.root.ToString()
 }
