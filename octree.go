@@ -11,17 +11,22 @@ type Octree struct {
 
 func NewOctree(region *protometry.Box) *Octree {
 	return &Octree{
-		root: /*&OctreeNode{position: region.GetCenter(), region: region}, //*/ NewRegionOctreeNode(region),
+		root: &OctreeNode{region: *region},
 	}
 }
 
+func (o *Octree) Insert(point Point) bool {
+	return o.root.Insert(point)
+}
+
+/*
 // Cull ...
 func (o *Octree) Cull(position protometry.VectorN) ([]interface{}, error) {
 	return nil, nil
 }
 
 func (o *Octree) Search(position protometry.VectorN) (*OctreeNode, error) {
-	in, err := position.In(*o.root.region)
+	in, err := position.In(o.root.region)
 	if err != nil {
 		return nil, err
 	}
@@ -31,19 +36,10 @@ func (o *Octree) Search(position protometry.VectorN) (*OctreeNode, error) {
 
 	return o.root.Search(position)
 }
-func (o *Octree) Insert(position protometry.VectorN, data []interface{}) error {
-	in, err := position.In(*o.root.region)
-	if err != nil {
-		return err
-	}
-	if !in {
-		return ErrtreeOutsideBounds
-	}
 
-	return o.root.Insert(position, data)
-}
+
 func (o *Octree) Remove(position protometry.VectorN) error {
-	in, err := position.In(*o.root.region)
+	in, err := position.In(o.root.region)
 	if err != nil {
 		return err
 	}
@@ -57,3 +53,4 @@ func (o *Octree) Remove(position protometry.VectorN) error {
 func (o *Octree) ToString() string {
 	return o.root.ToString()
 }
+*/

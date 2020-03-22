@@ -1,47 +1,95 @@
 package octree
 
 import (
-	"fmt"
-	"math"
-
 	"github.com/The-Tensox/protometry"
 )
 
+const (
+	TLF = iota // top left front
+	TRF        // top right front
+	BRF        // bottom right front
+	BLF        // bottom left front
+	TLB        // top left back
+	TRB        // top right back
+	BRB        // bottom right back
+	BLB        // bottom left back
+)
+
+var (
+	CAPACITY = 5
+)
+
+type Point struct {
+	data     interface{}
+	position protometry.VectorN
+}
+
+func NewPoint(x, y, z float64, data interface{}) Point {
+	return Point{data: data, position: *protometry.NewVectorN(x, y, z)}
+}
+
 type OctreeNode struct {
-	position *protometry.VectorN
-	data     []interface{}
-	region   *protometry.Box
-	children [8]*OctreeNode
+	points   []Point
+	region   protometry.Box
+	children *[8]OctreeNode
 }
 
-func NewEmptyOctreeNode() *OctreeNode {
-	return &OctreeNode{position: protometry.NewVectorN(math.MaxFloat64, math.MaxFloat64, math.MaxFloat64)}
-}
-
-func NewPointOctreeNode(position *protometry.VectorN, data []interface{}) *OctreeNode {
-	return &OctreeNode{position: position, data: data}
-}
-
-func NewRegionOctreeNode(region *protometry.Box) *OctreeNode {
-	o := NewEmptyOctreeNode()
-	o.position = nil
-	o.region = region
-	for i := TLF; i <= BLB; i++ {
-		o.children[i] = NewEmptyOctreeNode()
+// Insert ...
+// First case: position isn't in region => return error
+// Second case: number of points < CAPACITY and children is nil => add in points
+// Third case: number of points >= CAPACITY and children is nil => create children and add in children
+// Fourth case: children isn't nil => add in children
+func (o *OctreeNode) Insert(point Point) bool {
+	// First case
+	in, err := point.position.In(o.region)
+	if err != nil {
+		return false
 	}
-	return o
+	if !in {
+		return false
+	}
+
+	// Second case
+	if len(o.points) < CAPACITY && o.children == nil {
+		o.points = append(o.points, point)
+		return true
+	}
+
+	// Third case
+	if len(o.points) >= CAPACITY && o.children == nil {
+		subBoxes := o.region.MakeSubBoxes() // Can fail
+		o.children = &[8]OctreeNode{}
+		for i := range subBoxes {
+			o.children[i] = OctreeNode{region: *subBoxes[i]}
+		}
+		// Move old points to children
+		for i := range o.points {
+			o.Insert(o.points[i])
+		}
+		// Empty it
+		o.points = []Point{}
+	}
+
+	// Fourth case
+	for i := range o.children {
+		if o.children[i].Insert(point) {
+			return true
+		}
+	}
+	return false
 }
 
+/*
 func (o *OctreeNode) Search(position protometry.VectorN) (*OctreeNode, error) {
 	pos := o.getOctant(position)
-	if o.children[pos].position == nil {
+	if o.children[pos].center == nil {
 		// Region node
 		return o.children[pos].Search(position)
-	} else if o.children[pos].position.Dimensions[0] == math.MaxFloat64 {
+	} else if o.children[pos].center.Dimensions[0] == math.MaxFloat64 {
 		// Empty node
 		return nil, ErrtreeFailedToFindNode
 	}
-	eq, err := o.children[pos].position.ApproxEqual(position)
+	eq, err := o.children[pos].center.ApproxEqual(position)
 	if err != nil {
 		return nil, err
 	}
@@ -49,44 +97,6 @@ func (o *OctreeNode) Search(position protometry.VectorN) (*OctreeNode, error) {
 		return o.children[pos], nil
 	}
 	return nil, ErrtreeFailedToFindNode
-}
-func (o *OctreeNode) Insert(position protometry.VectorN, data []interface{}) error {
-	// Find the proper direction to insert
-	branch := o.getOctant(position)
-	// There is already a leaf there
-	if o.children[branch].position != nil {
-		eq, err := o.children[branch].position.ApproxEqual(position)
-		if err != nil {
-			return err
-		}
-		// Two point on same position
-		if eq {
-			o.children[branch].data = append(o.children[branch].data, data...)
-			return nil
-		}
-	}
-
-	if o.children[branch].position == nil {
-		// If region node, insert in a child
-		return o.children[branch].Insert(position, data)
-	} else if o.children[branch].position.Dimensions[0] == math.MaxFloat64 {
-		// If empty node, create node with new data on this leaf
-		o.children[branch] = NewPointOctreeNode(&position, data)
-		return nil
-	} else {
-		// If point node, store its data, make it region node,
-		// move stored data down to children
-		// insert new data in children
-		p := *o.children[branch].position
-		d := o.children[branch].data
-		// Make it region node
-		o.children[branch] = o.getNewRegion(branch)
-		// Find new leaf for old node
-		oldBranch := o.getOctant(p)
-		o.children[oldBranch].Insert(p, d)
-		// Find leaf for new node
-		return o.children[branch].Insert(position, data)
-	}
 }
 
 func (o *OctreeNode) Remove(position protometry.VectorN) error {
@@ -99,17 +109,6 @@ func (o *OctreeNode) Remove(position protometry.VectorN) error {
 	}
 	return nil
 }
-
-const (
-	TLF = iota // top left front
-	TRF        // top right front
-	BRF        // bottom right front
-	BLF        // bottom left front
-	TLB        // top left back
-	TRB        // top right back
-	BRB        // bottom right back
-	BLB        // bottom left back
-)
 
 func (o *OctreeNode) getNewRegion(branch int) *OctreeNode {
 	minD := o.region.GetMin().Dimensions
@@ -226,10 +225,10 @@ func (o *OctreeNode) recursiveToString(curIndent, stepIndent string) string {
 
 	// default values
 	childStr := "nil"
-	positionStr := "nil"
+	centerStr := "nil"
 	dataStr := "nil"
 
-	if o.children[0] != nil {
+	if o.children != nil {
 		doubleIndent := singleIndent + stepIndent
 
 		// accumulate child strings
@@ -241,8 +240,8 @@ func (o *OctreeNode) recursiveToString(curIndent, stepIndent string) string {
 		childStr = fmt.Sprintf("[\n%v%v]", childStr, singleIndent)
 	}
 
-	if o.position != nil {
-		positionStr = o.position.ToString()
+	if o.center != nil {
+		centerStr = o.center.ToString()
 	}
 
 	if o.data != nil {
@@ -250,5 +249,6 @@ func (o *OctreeNode) recursiveToString(curIndent, stepIndent string) string {
 		dataStr = fmt.Sprintf("[%d]", len(o.data))
 	}
 
-	return fmt.Sprintf("Node{\n%vposition: %v,\n%vdata: %v,\n%vregion: %v,\n%vchildren: %v,%v\n%v}", singleIndent, positionStr, singleIndent, dataStr, singleIndent, o.region, singleIndent, childStr, singleIndent, curIndent)
+	return fmt.Sprintf("Node{\n%vcenter: %v,\n%vdata: %v,\n%vregion: %v,\n%vchildren: %v,%v\n%v}", singleIndent, centerStr, singleIndent, dataStr, singleIndent, o.region, singleIndent, childStr, singleIndent, curIndent)
 }
+*/
