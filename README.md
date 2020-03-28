@@ -1,6 +1,7 @@
 
 # octree
 
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/3aa076e74fce4e80af0e694116444410)](https://app.codacy.com/gh/The-Tensox/octree?utm_source=github.com&utm_medium=referral&utm_content=The-Tensox/octree&utm_campaign=Badge_Grade_Dashboard)
 [![Build Status](https://img.shields.io/circleci/project/The-Tensox/octree/master.svg)](https://circleci.com/gh/The-Tensox/octree)
 
 This is a work in progress, API may change a little bit and current implementations may not match the ideal complexity shown in the papers, some functions have just currently a naive non-optimal implementation.
