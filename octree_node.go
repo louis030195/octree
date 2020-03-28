@@ -1,9 +1,12 @@
 package octree
 
 import (
+	"math"
+
 	"github.com/The-Tensox/protometry"
 )
 
+// FIXME
 const (
 	TLF = iota // top left front
 	TRF        // top right front
@@ -15,19 +18,36 @@ const (
 	BLB        // bottom left back
 )
 
+// FIXME
 var (
 	CAPACITY = 5
 )
 
+// Point stores position, data and collider about the object
 type Point struct {
 	data     interface{}
+	collider protometry.Box
+	// position refers to the center of the Point
 	position protometry.VectorN
 }
 
-func NewPoint(x, y, z float64, data interface{}) Point {
-	return Point{data: data, position: *protometry.NewVectorN(x, y, z)}
+// NewPoint is a Point constructor for ease of use
+func NewPoint(data interface{}, dims ...float64) *Point {
+	if len(dims) != 3 {
+		return nil
+	}
+	return &Point{data: data, position: *protometry.NewVectorN(dims...)}
 }
 
+// NewPointCollide is a Point constructor with collider for ease of use
+func NewPointCollide(data interface{}, collider protometry.Box, position protometry.VectorN) *Point {
+	if len(position.Dimensions) != 3 {
+		return nil
+	}
+	return &Point{data: data, collider: collider, position: position}
+}
+
+// OctreeNode ...
 type OctreeNode struct {
 	points   []Point
 	region   protometry.Box
@@ -39,7 +59,7 @@ type OctreeNode struct {
 // Second case: number of points < CAPACITY and children is nil => add in points
 // Third case: number of points >= CAPACITY and children is nil => create children and add in children
 // Fourth case: children isn't nil => add in children
-func (o *OctreeNode) Insert(point Point) bool {
+func (o *OctreeNode) insert(point Point) bool {
 	// First case
 	in, err := point.position.In(o.region)
 	if err != nil || !in {
@@ -61,7 +81,7 @@ func (o *OctreeNode) Insert(point Point) bool {
 		}
 		// Move old points to children
 		for i := range o.points {
-			o.Insert(o.points[i])
+			o.insert(o.points[i])
 		}
 		// Empty it
 		o.points = []Point{}
@@ -69,22 +89,23 @@ func (o *OctreeNode) Insert(point Point) bool {
 
 	// Fourth case
 	for i := range o.children {
-		if o.children[i].Insert(point) {
+		if o.children[i].insert(point) {
 			return true
 		}
 	}
 	return false
 }
 
-// Range find all points that appear within a region
-func (o *OctreeNode) Range(region protometry.Box) []Point {
+// getMultiple return a list of points which have they center found inside the defined region TODO: FIXME COMPLEXITY
+func (o *OctreeNode) getMultiple(dims ...float64) *[]Point {
 	// Prepare an array of results
 	var points []Point
+	region := *protometry.NewBox(dims[0], dims[1], dims[2], dims[3], dims[4], dims[5]) // Ugly
 
 	// Automatically abort if the range does not intersect this
 	intersect, err := o.region.Intersects(region)
 	if err != nil || !intersect {
-		return points // Empty
+		return nil // Empty
 	}
 
 	// Check objects at this level
@@ -97,48 +118,103 @@ func (o *OctreeNode) Range(region protometry.Box) []Point {
 
 	// Terminate here, if there are no children
 	if o.children == nil {
-		return points
+		return &points
 	}
 
 	// Otherwise, add the points from the children
 	for i := range o.children {
-		points = append(points, o.children[i].Range(region)...)
+		if n := o.children[i].getMultiple(dims...); n != nil {
+			points = append(points, *n...)
+		}
 	}
 
-	return points
+	return &points
 }
 
-/*
-func (o *OctreeNode) Search(position protometry.VectorN) (*OctreeNode, error) {
-	pos := o.getOctant(position)
-	if o.children[pos].center == nil {
-		// Region node
-		return o.children[pos].Search(position)
-	} else if o.children[pos].center.Dimensions[0] == math.MaxFloat64 {
-		// Empty node
-		return nil, ErrtreeFailedToFindNode
+// get return a Point, TODO: FIXME COMPLEXITY
+func (o *OctreeNode) get(dims ...float64) *Point {
+	position := *protometry.NewVectorN(dims...)
+	in, err := position.In(o.region)
+	if err != nil || !in {
+		return nil
 	}
-	eq, err := o.children[pos].center.ApproxEqual(position)
-	if err != nil {
-		return nil, err
+	for i := range o.points {
+		eq, err := o.points[i].position.ApproxEqual(position)
+		if err != nil {
+			return nil
+		}
+		if eq {
+			return &o.points[i]
+		}
 	}
-	if eq {
-		return o.children[pos], nil
-	}
-	return nil, ErrtreeFailedToFindNode
-}
-
-func (o *OctreeNode) Remove(position protometry.VectorN) error {
-	n, err := o.Search(position)
-	if err != nil {
-		return err
-	}
-	if n != nil {
-		*n = *NewEmptyOctreeNode()
+	if o.children != nil {
+		for i := range o.children {
+			if n := o.children[i].get(dims...); n != nil {
+				return n
+			}
+		}
 	}
 	return nil
 }
-*/
+
+// TODO: test, probably incorrect, impl for getmultiple, maybe return point
+func (o *OctreeNode) remove(dims ...float64) *Point {
+	if len(dims) != 3 {
+		return nil
+	}
+	// FIXME
+	return o.get(dims...)
+}
+
+func (o *OctreeNode) move(point Point, newPosition ...float64) *Point {
+	if len(newPosition) != 3 {
+		return nil
+	}
+	// FIXME
+	n := o.remove(point.position.Dimensions...)
+	if n == nil {
+		return n
+	}
+	newPoint := NewPoint(point.data, newPosition...)
+	if res := o.insert(*newPoint); res {
+		return newPoint
+	}
+	return nil
+}
+
+func (o *OctreeNode) raycast(origin, direction protometry.VectorN, maxDistance float64) *[]Point {
+	// Prepare an array of results
+	var points []Point
+	var destination *protometry.VectorN = protometry.NewVectorN(maxDistance, maxDistance, maxDistance)
+	if maxDistance != math.MaxFloat64 {
+		destination = direction.Mul(maxDistance)
+	}
+	destination = destination.Add(origin)
+	ray := *protometry.NewBox(origin.Get(0), origin.Get(1), origin.Get(2), destination.Get(0), destination.Get(1), destination.Get(2))
+
+	// Check objects at this level
+	for i := range o.points {
+		in, err := o.points[i].collider.Intersects(ray)
+		if err == nil && in {
+			points = append(points, o.points[i])
+		}
+	}
+
+	// Terminate here, if there are no children
+	if o.children == nil {
+		return &points
+	}
+
+	// Otherwise, add the points from the children
+	for i := range o.children {
+		// TODO: we can just move origin now
+		if n := o.children[i].raycast(origin, direction, maxDistance); n != nil {
+			points = append(points, *n...)
+		}
+	}
+
+	return &points
+}
 
 /*
 // ToString Get a human readable representation of the state of
