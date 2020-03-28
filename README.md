@@ -25,9 +25,20 @@ err = o.Insert(NewPoint(3, 3, 4, 3))
 // Insert 4 at 3;4;4
 err = o.Insert(NewPoint(3, 4, 4, 4))
 // 3 points
-points := o.SearchPositions(*protometry.NewBox(1, 1, 1, 4, 4, 4))
+points := o.Get(1, 1, 1, 4, 4, 4)
 // Point 3;3;3 of value 2
-point, err := o.Get(3, 3, 3)
+point := o.Get(3, 3, 3)
+
+o = NewOctree(protometry.NewBox(0, 0, 0, 10, 10, 10))
+p1 := protometry.NewBox(0, 0, 0, 0, 1, 0) // Line collider
+o.Insert(*NewPointCollide(1, *p1, *p1.GetCenter()))
+p2 := protometry.NewBox(0, 2, 0, 0, 3, 0)
+o.Insert(*NewPointCollide(2, *p2, *p2.GetCenter()))
+p3 := protometry.NewBox(0, 4, 0, 0, 5, 0)
+o.Insert(*NewPointCollide(3, *p3, *p3.GetCenter()))
+
+// Cast a ray toward up from 0;0;0 of length 10
+points := *o.Raycast(*protometry.NewVector3Zero(), *protometry.NewVectorN(0, 1, 0), 10) // 3 points
 ```
 
 ## Test
