@@ -16,37 +16,49 @@ func NewOctree(region *protometry.Box) *Octree {
 	}
 }
 
-// Insert a point in the Octree, TODO: bool or point return?
-func (o *Octree) Insert(point Point) bool {
-	return o.root.insert(point)
+// Insert a object in the Octree, TODO: bool or object return?
+func (o *Octree) Insert(object Object) bool {
+	return o.root.insert(object)
 }
 
-// Get point(s) using their center, not their collider
-func (o *Octree) Get(dims ...float64) *[]Point {
-	if len(dims) == 3 {
-		if p := o.root.get(dims...); p != nil {
-			return &[]Point{*p}
-		}
-	} else if len(dims) == 6 {
-		return o.root.getMultiple(dims...)
-	}
-	return nil
+// GetHeight debug function
+func (o *Octree) GetHeight() int {
+	return o.root.getHeight()
 }
 
-// Remove points at position
-func (o *Octree) Remove(dims ...float64) *Point {
-	return o.root.remove(dims...)
+// GetNumberOfNodes debug function
+func (o *Octree) GetNumberOfNodes() int {
+	return o.root.getNumberOfNodes()
 }
 
-// Move point to a new position
-func (o *Octree) Move(point Point, newPosition ...float64) *Point {
-	return o.root.move(point, newPosition...)
+// GetNumberOfObjects debug function
+func (o *Octree) GetNumberOfObjects() int {
+	return o.root.getNumberOfObjects()
 }
 
-// Raycast get all points colliding with an area
-func (o *Octree) Raycast(origin, direction protometry.VectorN, maxDistance float64) *[]Point {
-	return o.root.raycast(origin, direction, maxDistance)
+func (o *Octree) GetUsage() float64 {
+	return float64(o.GetNumberOfObjects()) / float64(o.GetNumberOfNodes()*CAPACITY)
 }
+
+// // Get object(s) using their center, not their collider
+// func (o *Octree) Get(dims ...float64) *[]Object {
+// 	return o.root.get(dims...)
+// }
+
+// // Remove objects at position
+// func (o *Octree) Remove(dims ...float64) *Object {
+// 	return o.root.remove(dims...)
+// }
+
+// // Move object to a new position
+// func (o *Octree) Move(object Object, newPosition ...float64) *Object {
+// 	return o.root.move(object, newPosition...)
+// }
+
+// // Raycast get all objects colliding with an area
+// func (o *Octree) Raycast(origin, direction protometry.VectorN, maxDistance float64) *[]Object {
+// 	return o.root.raycast(origin, direction, maxDistance)
+// }
 
 /*
 func (o *Octree) ToString() string {

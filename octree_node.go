@@ -1,8 +1,6 @@
 package octree
 
 import (
-	"math"
-
 	"github.com/The-Tensox/protometry"
 )
 
@@ -23,229 +21,284 @@ var (
 	CAPACITY = 5
 )
 
-// Point stores position, data and collider about the object
-type Point struct {
-	data     interface{}
-	collider protometry.Box
-	// position refers to the center of the Point
-	position protometry.VectorN
-}
-
-// NewPoint is a Point constructor for ease of use
-func NewPoint(data interface{}, dims ...float64) *Point {
-	if len(dims) != 3 {
-		return nil
-	}
-	return &Point{data: data, position: *protometry.NewVectorN(dims...)}
-}
-
-// NewPointCollide is a Point constructor with collider for ease of use
-func NewPointCollide(data interface{}, collider protometry.Box, position protometry.VectorN) *Point {
-	if len(position.Dimensions) != 3 {
-		return nil
-	}
-	return &Point{data: data, collider: collider, position: position}
-}
-
 // OctreeNode ...
 type OctreeNode struct {
-	points   []Point
+	objects  []Object
 	region   protometry.Box
 	children *[8]OctreeNode
 }
 
 // Insert ...
-// First case: position isn't in region => return error
-// Second case: number of points < CAPACITY and children is nil => add in points
-// Third case: number of points >= CAPACITY and children is nil => create children and add in children
-// Fourth case: children isn't nil => add in children
-func (o *OctreeNode) insert(point Point) bool {
+// First case: object bounds doesn't fit in node region => return false
+// Second case: number of objects < CAPACITY and children is nil => add in objects
+// Third case: number of objects >= CAPACITY and children is nil => create children, try to move all objects in children
+// and try to add in children otherwise add in objects
+// Fourth case: children isn't nil => try to add in children otherwise add in objects
+func (o *OctreeNode) insert(object Object) bool {
 	// First case
-	in, err := point.position.In(o.region)
-	if err != nil || !in {
+	ok, err := object.bounds.Inside(o.region)
+	if err != nil || !ok {
 		return false
 	}
 
 	// Second case
-	if len(o.points) < CAPACITY && o.children == nil {
-		o.points = append(o.points, point)
+	if len(o.objects) < CAPACITY && o.children == nil {
+		o.objects = append(o.objects, object)
 		return true
 	}
 
 	// Third case
-	if len(o.points) >= CAPACITY && o.children == nil {
-		subBoxes := o.region.MakeSubBoxes() // Can fail
-		o.children = &[8]OctreeNode{}
-		for i := range subBoxes {
-			o.children[i] = OctreeNode{region: *subBoxes[i]}
+	if len(o.objects) >= CAPACITY && o.children == nil {
+		o.split()
+
+		var objects []Object
+		copy(objects, o.objects)
+		o.objects = []Object{}
+
+		// Move old objects to children
+		for i := range objects {
+			o.insert(objects[i])
 		}
-		// Move old points to children
-		for i := range o.points {
-			o.insert(o.points[i])
-		}
-		// Empty it
-		o.points = []Point{}
 	}
 
 	// Fourth case
 	for i := range o.children {
-		if o.children[i].insert(point) {
+		if o.children[i].insert(object) {
 			return true
 		}
 	}
-	return false
+	o.objects = append(o.objects, object)
+	return true
 }
 
-// getMultiple return a list of points which have they center found inside the defined region TODO: FIXME COMPLEXITY
-func (o *OctreeNode) getMultiple(dims ...float64) *[]Point {
-	// Prepare an array of results
-	var points []Point
-	region := *protometry.NewBox(dims[0], dims[1], dims[2], dims[3], dims[4], dims[5]) // Ugly
-
-	// Automatically abort if the range does not intersect this
-	intersect, err := o.region.Intersects(region)
-	if err != nil || !intersect {
-		return nil // Empty
+// Splits the OctreeNode into eight children.
+func (o *OctreeNode) split() {
+	subBoxes := o.region.MakeSubBoxes()
+	o.children = &[8]OctreeNode{}
+	for i := range subBoxes {
+		o.children[i] = OctreeNode{region: *subBoxes[i]}
 	}
+}
 
-	// Check objects at this level
-	for i := range o.points {
-		in, err := o.points[i].position.In(region)
-		if err == nil && in {
-			points = append(points, o.points[i])
-		}
-	}
-
-	// Terminate here, if there are no children
+func (o *OctreeNode) getHeight() int {
 	if o.children == nil {
-		return &points
+		return 1
 	}
-
-	// Otherwise, add the points from the children
-	for i := range o.children {
-		if n := o.children[i].getMultiple(dims...); n != nil {
-			points = append(points, *n...)
+	max := 0
+	for _, c := range o.children {
+		h := c.getHeight()
+		if h > max {
+			max = h
 		}
 	}
-
-	return &points
+	return max + 1
 }
 
-// get return a Point, TODO: FIXME COMPLEXITY
-func (o *OctreeNode) get(dims ...float64) *Point {
-	position := *protometry.NewVectorN(dims...)
-	in, err := position.In(o.region)
-	if err != nil || !in {
-		return nil
-	}
-	for i := range o.points {
-		eq, err := o.points[i].position.ApproxEqual(position)
-		if err != nil {
-			return nil
-		}
-		if eq {
-			return &o.points[i]
-		}
-	}
-	if o.children != nil {
-		for i := range o.children {
-			if n := o.children[i].get(dims...); n != nil {
-				return n
-			}
-		}
-	}
-	return nil
-}
-
-// TODO: test, probably incorrect, impl for getmultiple, maybe return point
-func (o *OctreeNode) remove(dims ...float64) *Point {
-	if len(dims) != 3 {
-		return nil
-	}
-	// FIXME
-	return o.get(dims...)
-}
-
-func (o *OctreeNode) move(point Point, newPosition ...float64) *Point {
-	if len(newPosition) != 3 {
-		return nil
-	}
-	// FIXME
-	n := o.remove(point.position.Dimensions...)
-	if n == nil {
-		return n
-	}
-	newPoint := NewPoint(point.data, newPosition...)
-	if res := o.insert(*newPoint); res {
-		return newPoint
-	}
-	return nil
-}
-
-func (o *OctreeNode) raycast(origin, direction protometry.VectorN, maxDistance float64) *[]Point {
-	// Prepare an array of results
-	var points []Point
-	var destination *protometry.VectorN = protometry.NewVectorN(maxDistance, maxDistance, maxDistance)
-	if maxDistance != math.MaxFloat64 {
-		destination = direction.Mul(maxDistance)
-	}
-	destination = destination.Add(origin)
-	ray := *protometry.NewBox(origin.Get(0), origin.Get(1), origin.Get(2), destination.Get(0), destination.Get(1), destination.Get(2))
-
-	// Check objects at this level
-	for i := range o.points {
-		in, err := o.points[i].collider.Intersects(ray)
-		if err == nil && in {
-			points = append(points, o.points[i])
-		}
-	}
-
-	// Terminate here, if there are no children
+func (o *OctreeNode) getNumberOfNodes() int {
 	if o.children == nil {
-		return &points
+		return 1
 	}
-
-	// Otherwise, add the points from the children
-	for i := range o.children {
-		// TODO: we can just move origin now
-		if n := o.children[i].raycast(origin, direction, maxDistance); n != nil {
-			points = append(points, *n...)
-		}
+	sum := len(o.children)
+	for _, c := range o.children {
+		n := c.getNumberOfNodes()
+		sum += n
 	}
-
-	return &points
+	return sum
 }
 
-/*
-// ToString Get a human readable representation of the state of
-// this node and its contents.
-func (o *OctreeNode) ToString() string {
-	return o.recursiveToString("", "  ")
+func (o *OctreeNode) getNumberOfObjects() int {
+	if o.children == nil {
+		return len(o.objects)
+	}
+	sum := len(o.objects)
+	for _, c := range o.children {
+		n := c.getNumberOfObjects()
+		sum += n
+	}
+	return sum
 }
 
-func (o *OctreeNode) recursiveToString(curIndent, stepIndent string) string {
-	singleIndent := curIndent + stepIndent
+// /* Merge all children into this node - the opposite of Split.
+//  * Note: We only have to check one level down since a merge will never happen if the children already have children,
+//  * since THAT won't happen unless there are already too many objects to merge.
+//  * TODO: to be tested
+//  */
+// func (o *OctreeNode) merge() {
+// 	// Note: We know children != null or we wouldn't be merging
+// 	for i := 0; i < 8; i++ {
+// 		curChild := o.children[i]
+// 		numObjects := len(curChild.objects)
+// 		for j := numObjects - 1; j >= 0; j-- {
+// 			curObj := curChild.objects[j]
+// 			o.objects = append(o.objects, curObj)
+// 		}
+// 	}
+// 	// Remove the child nodes (and the objects in them - they've been added elsewhere now)
+// 	o.children = nil
+// }
 
-	// default values
-	childStr := "nil"
-	pointsStr := "nil"
+// /*
+//  * We can shrink the octree if:
+//  * - This node is >= double minLength in length
+//  * - All objects in the root node are within one octant
+//  * - This node doesn't have children, or does but 7/8 children are empty
+//  * We can also shrink it if there are no objects left at all!
+//  * TODO: to be tested
+//  */
+// func (o *OctreeNode) shrink() OctreeNode {
+// 	return OctreeNode{}
+// }
 
-	if o.children != nil {
-		doubleIndent := singleIndent + stepIndent
+// // get return Object(s) based on their position only
+// func (o *OctreeNode) get(dims ...float64) *[]Object {
+// 	// Prepare an array of results
+// 	var objects []Object
+// 	var region *protometry.Box
+// 	var ok bool
+// 	var err error
 
-		// accumulate child strings
-		childStr = ""
-		for i, child := range o.children {
-			childStr = childStr + fmt.Sprintf("%v%d: %v,\n", doubleIndent, i, child.recursiveToString(doubleIndent, stepIndent))
-		}
+// 	// We're looking for Object(s) at a precise position
+// 	if len(dims) == 3 {
+// 		region = protometry.NewBox(dims[0], dims[1], dims[2], dims[0], dims[1], dims[2]) // Ugly
+// 	} else if len(dims) == 6 { // We're looking for Object(s) inside a region
+// 		region = protometry.NewBox(dims[0], dims[1], dims[2], dims[3], dims[4], dims[5]) // Ugly
+// 	}
+// 	// Automatically abort if the range does not intersect this
+// 	ok, err = o.region.Intersects(*region)
+// 	if err != nil || !ok {
+// 		return &objects
+// 	}
 
-		childStr = fmt.Sprintf("[\n%v%v]", childStr, singleIndent)
-	}
+// 	// Check objects at this level
+// 	for i := range o.objects {
+// 		ok, err = o.objects[i].position.In(*region)
+// 		if err == nil && ok {
+// 			objects = append(objects, o.objects[i])
+// 		}
+// 	}
 
-	for _, point := range o.points {
-		pointsStr = pointsStr + fmt.Sprintf("%v%v", singleIndent+stepIndent, point)
-	}
+// 	// Terminate here, if there are no children
+// 	if o.children == nil {
+// 		return &objects
+// 	}
 
-	return fmt.Sprintf("Node{\n%vregion: %v,\n%vpoints: %v,\n%vchildren: %v,%v\n%v}", singleIndent, o.region, singleIndent, pointsStr, singleIndent, childStr, singleIndent, curIndent)
-}
-*/
+// 	// Otherwise, add the objects from the children
+// 	for i := range o.children {
+// 		if n := o.children[i].get(dims...); n != nil {
+// 			objects = append(objects, *n...)
+// 		}
+// 	}
+
+// 	return &objects
+// }
+
+// // TODO: test, probably incorrect, impl for getmultiple, maybe return object
+// func (o *OctreeNode) remove(dims ...float64) *Object {
+// 	if len(dims) != 3 {
+// 		return nil
+// 	}
+// 	// FIXME
+// 	return nil
+// }
+
+// func (o *OctreeNode) move(object Object, newPosition ...float64) *Object {
+// 	if len(newPosition) != 3 {
+// 		return nil
+// 	}
+// 	// FIXME
+// 	n := o.remove(object.position.Dimensions...)
+// 	if n == nil {
+// 		return n
+// 	}
+// 	newObject := NewObject(object.data, newPosition...)
+// 	if res := o.insert(*newObject); res {
+// 		return newObject
+// 	}
+// 	return nil
+// }
+
+// func (o *OctreeNode) raycast(origin, direction protometry.VectorN, maxDistance float64) *[]Object {
+// 	// Prepare an array of results
+// 	var objects []Object
+// 	var destination *protometry.VectorN = protometry.NewVectorN(maxDistance, maxDistance, maxDistance)
+// 	if maxDistance != math.MaxFloat64 {
+// 		destination = direction.Mul(maxDistance)
+// 	}
+// 	destination = destination.Add(origin)
+// 	ray := *protometry.NewBox(origin.Get(0), origin.Get(1), origin.Get(2), destination.Get(0), destination.Get(1), destination.Get(2))
+
+// 	// Check objects at this level
+// 	for i := range o.objects {
+// 		in, err := o.objects[i].collider.bounds.Intersects(ray)
+// 		if err == nil && in {
+// 			objects = append(objects, o.objects[i])
+// 		}
+// 	}
+
+// 	// Terminate here, if there are no children
+// 	if o.children == nil {
+// 		return &objects
+// 	}
+
+// 	// Otherwise, add the objects from the children
+// 	for i := range o.children {
+// 		// TODO: we can just move origin now
+// 		if n := o.children[i].raycast(origin, direction, maxDistance); n != nil {
+// 			objects = append(objects, *n...)
+// 		}
+// 	}
+
+// 	return &objects
+// }
+
+// /*
+// // ToString Get a human readable representation of the state of
+// // this node and its contents.
+// func (o *OctreeNode) ToString() string {
+// 	return o.recursiveToString("", "  ")
+// }
+
+// func (o *OctreeNode) recursiveToString(curIndent, stepIndent string) string {
+// 	singleIndent := curIndent + stepIndent
+
+// 	// default values
+// 	childStr := "nil"
+// 	pointsStr := "nil"
+
+// 	if o.children != nil {
+// 		doubleIndent := singleIndent + stepIndent
+
+// 		// accumulate child strings
+// 		childStr = ""
+// 		for i, child := range o.children {
+// 			childStr = childStr + fmt.Sprintf("%v%d: %v,\n", doubleIndent, i, child.recursiveToString(doubleIndent, stepIndent))
+// 		}
+
+// 		childStr = fmt.Sprintf("[\n%v%v]", childStr, singleIndent)
+// 	}
+
+// 	for _, object := range o.objects {
+// 		pointsStr = pointsStr + fmt.Sprintf("%v%v", singleIndent+stepIndent, object)
+// 	}
+
+// 	return fmt.Sprintf("Node{\n%vregion: %v,\n%vpoints: %v,\n%vchildren: %v,%v\n%v}", singleIndent, o.region, singleIndent, pointsStr, singleIndent, childStr, singleIndent, curIndent)
+// }
+// */
+
+// /*
+//  * Return the best fit this position should be placed among children
+//  */
+// func (o *OctreeNode) bestFit(position protometry.VectorN) int {
+// 	oct := 0
+// 	center := o.region.GetCenter()
+// 	if position.Get(0) <= center.Get(0) {
+// 		oct |= 4
+// 	}
+// 	if position.Get(1) <= center.Get(1) {
+// 		oct |= 2
+// 	}
+// 	if position.Get(2) <= center.Get(2) {
+// 		oct |= 1
+// 	}
+// 	return oct
+// }

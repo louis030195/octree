@@ -9,7 +9,7 @@ This is a work in progress, API may change a little bit and current implementati
 ## Installation
 
 ```bash
-go get -u github.com/The-Tensox/protometry
+go get -u github.com/The-Tensox/octree
 ```
 
 ## Usage
@@ -59,6 +59,11 @@ go test -benchmem -run XXX -bench . -benchtime 0.2s
 
 - [ ] Improve performance, more complexity checks / benchmarks
 - [ ] Take decision either to use ...float64 or protometry.VectorN in args (since there is no overloading in Go ;))
+- [ ] point.OnCollisionEnter(myCallback), point.OnCollisionStay(myCallback2), point.OnCollisionExit(myCallback3) ...
+- [ ] Trigger collision callback on move, insert, remove
+- [ ] Implement "cubecast", fix raycast
+- [ ] Implement shrink, merge
+- [ ] Tree vizualisation ?
 
 ## References
 
@@ -66,6 +71,7 @@ go test -benchmem -run XXX -bench . -benchtime 0.2s
 - [Github Rust rust-octree](https://github.com/ybyygu/rust-octree)
 - [Github JS sparse-octree](https://github.com/vanruesc/sparse-octree)
 - [Github Distributed adaptive octree construction, 2:1 balancing & partitioning based on space filling curves](https://github.com/paralab/Dendro-5.01)
+- [Github UnityOctree](https://github.com/Nition/UnityOctree)
 - [AN OVERVIEW OF QUADTREES, OCTREES, AND RELATED HIERARCHICAL DATA STRUCTURES](https://www.cs.umd.edu/~hjs/pubs/Samettfcgc88-ocr.pdf)
 - [Efficient Sparse Voxel Octrees](https://research.nvidia.com/publication/efficient-sparse-voxel-octrees)
 - [An Efficient Parametric Algorithm for Octree Traversal](http://wscg.zcu.cz/wscg2000/Papers_2000/X31.pdf)
