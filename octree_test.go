@@ -60,6 +60,28 @@ func TestOctreeNode_Insert(t *testing.T) {
 	t.Logf("Octree objects: %v", o.GetNumberOfObjects())
 }
 
+func TestOctreeNode_GetColliding(t *testing.T) {
+	o := NewOctree(protometry.NewBox(1, 1, 1, 4, 4, 4))
+	ok := o.Insert(*NewObjectCube(0, 2, 2, 3, 0.5))
+	equals(t, true, ok)
+	ok = o.Insert(*NewObjectCube(5, 3, 3, 3, 1))
+	equals(t, true, ok)
+	ok = o.Insert(*NewObjectCube(6, 2, 2, 2, 1))
+	equals(t, true, ok)
+	equals(t, 3, len(o.root.objects))
+	ok = o.Insert(*NewObjectCube(7, 2, 2, 2, 1))
+	equals(t, true, ok)
+
+	colliders := o.GetColliding(*protometry.NewBox(0, 0, 0, 0.9, 0.9, 0.9))
+	equals(t, 0, len(colliders))
+	colliders = o.GetColliding(*protometry.NewBox(0, 0, 0, 1, 1, 1))
+	equals(t, 2, len(colliders))
+	colliders = o.GetColliding(*protometry.NewBox(1, 1, 1, 1.1, 1.1, 1.1))
+	equals(t, 2, len(colliders))
+	equals(t, 6, colliders[0].data)
+	equals(t, 7, colliders[1].data)
+}
+
 // func BenchmarkOctreeNode_Insert(b *testing.B) {
 // 	b.StartTimer()
 // 	// New octree

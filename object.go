@@ -16,3 +16,8 @@ func NewObject(data interface{}, bounds protometry.Box) *Object {
 func NewObjectCube(data interface{}, x, y, z, size float64) *Object {
 	return NewObject(data, *protometry.NewBoxOfSize(*protometry.NewVectorN(x, y, z), size))
 }
+
+func (o *Object) Equal(object Object) bool {
+	return o.data == object.data && o.bounds.Equal(object.bounds)
+
+}

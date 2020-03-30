@@ -21,6 +21,11 @@ func (o *Octree) Insert(object Object) bool {
 	return o.root.insert(object)
 }
 
+// Remove object
+func (o *Octree) Remove(object Object) *Object {
+	return o.root.remove(object)
+}
+
 // GetHeight debug function
 func (o *Octree) GetHeight() int {
 	return o.root.getHeight()
@@ -40,14 +45,15 @@ func (o *Octree) GetUsage() float64 {
 	return float64(o.GetNumberOfObjects()) / float64(o.GetNumberOfNodes()*CAPACITY)
 }
 
+// GetColliding returns an array of objects that intersect with the specified bounds, if any.
+// Otherwise returns an empty array.
+func (o *Octree) GetColliding(bounds protometry.Box) []Object {
+	return o.root.getColliding(bounds)
+}
+
 // // Get object(s) using their center, not their collider
 // func (o *Octree) Get(dims ...float64) *[]Object {
 // 	return o.root.get(dims...)
-// }
-
-// // Remove objects at position
-// func (o *Octree) Remove(dims ...float64) *Object {
-// 	return o.root.remove(dims...)
 // }
 
 // // Move object to a new position

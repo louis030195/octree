@@ -36,8 +36,7 @@ type OctreeNode struct {
 // Fourth case: children isn't nil => try to add in children otherwise add in objects
 func (o *OctreeNode) insert(object Object) bool {
 	// First case
-	ok, err := object.bounds.Inside(o.region)
-	if err != nil || !ok {
+	if !object.bounds.Fit(o.region) {
 		return false
 	}
 
@@ -69,6 +68,41 @@ func (o *OctreeNode) insert(object Object) bool {
 	}
 	o.objects = append(o.objects, object)
 	return true
+}
+
+// TODO: test, probably incorrect, impl for getmultiple, maybe return object
+func (o *OctreeNode) remove(object Object) *Object {
+	var removedObject *Object
+
+	// Object outside bounds
+	if object.bounds.Fit(o.region) {
+		return removedObject
+	}
+
+	for i := 0; i < len(o.objects); i++ {
+		// Found it ? delete it and return a copy
+		if o.objects[i].Equal(object) {
+			removedObject = &o.objects[i]
+			// https://stackoverflow.com/questions/37334119/how-to-delete-an-element-from-a-slice-in-golang
+			o.objects = append(o.objects[:i], o.objects[i+1:]...)
+			return removedObject
+		}
+	}
+
+	if o.children != nil {
+		for i := range o.children {
+			if removedObject = o.children[i].remove(object); removedObject != nil {
+				break
+			}
+		}
+	}
+
+	// Successfully removed in children
+	if removedObject != nil && o.children != nil {
+		// Try to merge nodes now that we've removed an item
+		// o.merge()
+	}
+	return removedObject
 }
 
 // Splits the OctreeNode into eight children.
@@ -116,6 +150,45 @@ func (o *OctreeNode) getNumberOfObjects() int {
 		sum += n
 	}
 	return sum
+}
+
+func (o *OctreeNode) getColliding(bounds protometry.Box) []Object {
+	// If current node region entirely fit inside desired bounds,
+	// No need to search somewhere else => return all objects
+	if o.region.Fit(bounds) {
+		return o.getAllObjects()
+	}
+	var objects []Object
+	// If bounds doesn't intersects with region, no collision here => return empty
+	if !o.region.Intersects(bounds) {
+		return objects
+	}
+	// return objects that intersects with bounds and its children's objects
+	for _, obj := range o.objects {
+		if obj.bounds.Intersects(bounds) {
+			objects = append(objects, obj)
+		}
+	}
+	// No children ? Stop here
+	if o.children == nil {
+		return objects
+	}
+	// Get the colliding children
+	for _, c := range o.children {
+		objects = append(objects, c.getColliding(bounds)...)
+	}
+	return objects
+}
+
+func (o *OctreeNode) getAllObjects() []Object {
+	var objects []Object
+	if o.children == nil {
+		return o.objects
+	}
+	for _, c := range o.children {
+		objects = append(objects, c.getAllObjects()...)
+	}
+	return objects
 }
 
 // /* Merge all children into this node - the opposite of Split.
@@ -190,15 +263,6 @@ func (o *OctreeNode) getNumberOfObjects() int {
 // 	}
 
 // 	return &objects
-// }
-
-// // TODO: test, probably incorrect, impl for getmultiple, maybe return object
-// func (o *OctreeNode) remove(dims ...float64) *Object {
-// 	if len(dims) != 3 {
-// 		return nil
-// 	}
-// 	// FIXME
-// 	return nil
 // }
 
 // func (o *OctreeNode) move(object Object, newPosition ...float64) *Object {
