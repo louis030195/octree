@@ -29,29 +29,25 @@ type OctreeNode struct {
 }
 
 // Insert ...
-// First case: object bounds doesn't fit in node region => return false
-// Second case: number of objects < CAPACITY and children is nil => add in objects
-// Third case: number of objects >= CAPACITY and children is nil => create children, try to move all objects in children
-// and try to add in children otherwise add in objects
-// Fourth case: children isn't nil => try to add in children otherwise add in objects
 func (o *OctreeNode) insert(object Object) bool {
-	// First case
+	// Object bounds doesn't fit in node region => return false
 	if !object.bounds.Fit(o.region) {
 		return false
 	}
 
-	// Second case
+	// Number of objects < CAPACITY and children is nil => add in objects
 	if len(o.objects) < CAPACITY && o.children == nil {
 		o.objects = append(o.objects, object)
 		return true
 	}
 
-	// Third case
+	// Number of objects >= CAPACITY and children is nil => create children,
+	// try to move all objects in children
+	// and try to add in children otherwise add in objects
 	if len(o.objects) >= CAPACITY && o.children == nil {
 		o.split()
 
-		var objects []Object
-		copy(objects, o.objects)
+		objects := o.objects
 		o.objects = []Object{}
 
 		// Move old objects to children
@@ -60,7 +56,7 @@ func (o *OctreeNode) insert(object Object) bool {
 		}
 	}
 
-	// Fourth case
+	// Children isn't nil => try to add in children otherwise add in objects
 	for i := range o.children {
 		if o.children[i].insert(object) {
 			return true
@@ -75,8 +71,8 @@ func (o *OctreeNode) remove(object Object) *Object {
 	var removedObject *Object
 
 	// Object outside bounds
-	if object.bounds.Fit(o.region) {
-		return removedObject
+	if !object.bounds.Fit(o.region) {
+		return removedObject // nil
 	}
 
 	for i := 0; i < len(o.objects); i++ {
@@ -98,9 +94,9 @@ func (o *OctreeNode) remove(object Object) *Object {
 	}
 
 	// Successfully removed in children
-	if removedObject != nil && o.children != nil {
+	if removedObject != nil {
 		// Try to merge nodes now that we've removed an item
-		// o.merge()
+		o.merge()
 	}
 	return removedObject
 }
@@ -191,24 +187,27 @@ func (o *OctreeNode) getAllObjects() []Object {
 	return objects
 }
 
-// /* Merge all children into this node - the opposite of Split.
-//  * Note: We only have to check one level down since a merge will never happen if the children already have children,
-//  * since THAT won't happen unless there are already too many objects to merge.
-//  * TODO: to be tested
-//  */
-// func (o *OctreeNode) merge() {
-// 	// Note: We know children != null or we wouldn't be merging
-// 	for i := 0; i < 8; i++ {
-// 		curChild := o.children[i]
-// 		numObjects := len(curChild.objects)
-// 		for j := numObjects - 1; j >= 0; j-- {
-// 			curObj := curChild.objects[j]
-// 			o.objects = append(o.objects, curObj)
-// 		}
-// 	}
-// 	// Remove the child nodes (and the objects in them - they've been added elsewhere now)
-// 	o.children = nil
-// }
+/* Merge all children into this node - the opposite of Split.
+ * Note: We only have to check one level down since a merge will never happen if the children already have children,
+ * since THAT won't happen unless there are already too many objects to merge.
+ */
+func (o *OctreeNode) merge() {
+	if o.getNumberOfObjects() > CAPACITY {
+		return
+	}
+
+	// Note: We know children != null or we wouldn't be merging
+	for i := range o.children {
+		curChild := o.children[i]
+		numObjects := len(curChild.objects)
+		for j := numObjects - 1; j >= 0; j-- {
+			curObj := curChild.objects[j]
+			o.objects = append(o.objects, curObj)
+		}
+	}
+	// Remove the child nodes (and the objects in them - they've been added elsewhere now)
+	o.children = nil
+}
 
 // /*
 //  * We can shrink the octree if:

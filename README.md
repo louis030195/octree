@@ -15,31 +15,9 @@ go get -u github.com/The-Tensox/octree
 ## Usage
 
 ```go
-// Create an Octree of region 1;1;1 to 4;4;4
 o := NewOctree(protometry.NewBox(1, 1, 1, 4, 4, 4))
-// Out of bounds
-err := o.Insert(NewPoint(10, 10, 10, 1))
-// Insert 2 at 3;3;3
-err = o.Insert(NewPoint(3, 3, 3, 2))
-// Insert 3 at 3;3;4
-err = o.Insert(NewPoint(3, 3, 4, 3))
-// Insert 4 at 3;4;4
-err = o.Insert(NewPoint(3, 4, 4, 4))
-// 3 points
-points := o.Get(1, 1, 1, 4, 4, 4)
-// Point 3;3;3 of value 2
-point := o.Get(3, 3, 3)
-
-o = NewOctree(protometry.NewBox(0, 0, 0, 10, 10, 10))
-p1 := protometry.NewBox(0, 0, 0, 0, 1, 0) // Line collider
-o.Insert(*NewPointCollide(1, *p1, *p1.GetCenter()))
-p2 := protometry.NewBox(0, 2, 0, 0, 3, 0)
-o.Insert(*NewPointCollide(2, *p2, *p2.GetCenter()))
-p3 := protometry.NewBox(0, 4, 0, 0, 5, 0)
-o.Insert(*NewPointCollide(3, *p3, *p3.GetCenter()))
-
-// Cast a ray toward up from 0;0;0 of length 10
-points := *o.Raycast(*protometry.NewVector3Zero(), *protometry.NewVectorN(0, 1, 0), 10) // 3 points
+ok := o.Insert(*NewObjectCube(0, 2, 2, 3, 0.5))
+colliders := o.GetColliding(*protometry.NewBox(0, 0, 0, 0.9, 2.9, 0.9))
 ```
 
 ## Test

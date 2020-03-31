@@ -42,8 +42,19 @@ func TestOctreeNode_Insert(t *testing.T) {
 	ok = o.Insert(*NewObjectCube(7, 2, 2, 2, 1))
 	equals(t, true, ok)
 
-	// New octree
-	size := 1000.
+	// Go over capacity threshold, force a split
+	size := 10.
+	o = NewOctree(protometry.NewBoxOfSize(*protometry.NewVector3Zero(), size))
+	for i := 0.; i < size; i++ {
+		ok = o.Insert(*NewObjectCube(0, i, i, i, 1))
+		equals(t, true, ok)
+	}
+
+	// We inserted 10 objects so we should have 10 objects ;)
+	equals(t, 10, o.GetNumberOfObjects())
+
+	// Let's test with more scale
+	size = 1000.
 	o = NewOctree(protometry.NewBoxOfSize(*protometry.NewVector3Zero(), size))
 	for i := 1.; i < size; i++ {
 		for j := 1.; j < size; j++ {
@@ -80,6 +91,53 @@ func TestOctreeNode_GetColliding(t *testing.T) {
 	equals(t, 2, len(colliders))
 	equals(t, 6, colliders[0].data)
 	equals(t, 7, colliders[1].data)
+}
+
+func TestOctree_Remove(t *testing.T) {
+	o := boilerplateTree(t)
+	myObj := NewObjectCube(27, 2, 2, 3, 0.5)
+	ok := o.Insert(*myObj)
+	equals(t, true, ok)
+	removedObj := o.Remove(*myObj)
+	equals(t, true, removedObj != nil)
+	equals(t, 27, removedObj.data)
+	oldBounds := myObj.bounds
+	equals(t, true, removedObj.bounds.Equal(oldBounds))
+	removedObj = o.Remove(*NewObjectCube(12, 2, 2, 3, 0.5))
+	equals(t, true, removedObj == nil)
+
+	// New octree
+	size := 1000.
+	o = NewOctree(protometry.NewBoxOfSize(*protometry.NewVector3Zero(), size))
+	var objects []Object
+	for i := 1.; i < size; i++ {
+		myObj = NewObjectCube(0, i, i, i, 1)
+		ok = o.Insert(*myObj)
+		equals(t, true, ok)
+		objects = append(objects, *myObj)
+	}
+	for i := range objects {
+		removedObj = o.Remove(objects[i])
+		equals(t, true, removedObj != nil)
+	}
+	equals(t, 0, o.GetNumberOfObjects())
+	equals(t, 1, o.GetNumberOfNodes()) // Only root
+	o = NewOctree(protometry.NewBoxOfSize(*protometry.NewVector3Zero(), size))
+	objects = []Object{}
+	for i := 0.; i < 9; i++ {
+		myObj = NewObjectCube(0, i, i, i, 1)
+		objects = append(objects, *myObj)
+		ok = o.Insert(*myObj)
+		equals(t, true, ok)
+	}
+	equals(t, 9, o.GetNumberOfObjects())
+	equals(t, 8, len(o.root.children))
+	o.Remove(*myObj)
+	var nilChildren *[8]OctreeNode
+	// Shouldn't have merged
+	equals(t, true, nilChildren != o.root.children)
+	// One less object
+	equals(t, 8, o.GetNumberOfObjects())
 }
 
 // func BenchmarkOctreeNode_Insert(b *testing.B) {
@@ -152,14 +210,6 @@ func TestOctreeNode_GetColliding(t *testing.T) {
 // 		}
 // 	}
 // 	b.StopTimer()
-// }
-
-// func TestOctree_Remove(t *testing.T) {
-// 	o := boilerplateTree(t)
-// 	p := o.Remove(3, 3, 3)
-// 	equals(t, true, p != nil)
-// 	equals(t, *protometry.NewVectorN(3, 3, 3), p.position)
-// 	// TODO: what if it was colliding ... ?
 // }
 
 // func TestOctree_MoveWithoutCollision(t *testing.T) {
