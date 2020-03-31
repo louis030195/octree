@@ -132,12 +132,33 @@ func TestOctree_Remove(t *testing.T) {
 	}
 	equals(t, 9, o.GetNumberOfObjects())
 	equals(t, 8, len(o.root.children))
-	o.Remove(*myObj)
+
+	equals(t, true, o.Remove(*myObj) != nil)
 	var nilChildren *[8]OctreeNode
 	// Shouldn't have merged
 	equals(t, true, nilChildren != o.root.children)
 	// One less object
 	equals(t, 8, o.GetNumberOfObjects())
+	equals(t, true, o.Remove(objects[len(objects)-1]) == nil) // We've already removed it
+	equals(t, 8, o.GetNumberOfObjects())
+	equals(t, true, o.Remove(objects[len(objects)-2]) != nil)
+	equals(t, 7, o.GetNumberOfObjects())
+}
+
+func TestOctree_Move(t *testing.T) {
+	o := NewOctree(protometry.NewBoxOfSize(*protometry.NewVector3Zero(), 10))
+	myObj := NewObjectCube(0, 0, 0, 0, 1)
+	equals(t, *protometry.NewBox(-1, -1, -1, 1, 1, 1), myObj.bounds)
+	equals(t, true, o.Insert(*myObj))
+	equals(t, 1, o.GetNumberOfObjects())
+	myObj = o.Move(*myObj, 0, 0, 0, 2, 2, 2) // Using bounds
+	equals(t, true, myObj != nil)
+	equals(t, *protometry.NewBox(0, 0, 0, 2, 2, 2), myObj.bounds)
+	equals(t, 1, o.GetNumberOfObjects())
+	myObj = o.Move(*myObj, 3, 3, 3) // Using position
+	equals(t, true, myObj != nil)
+	equals(t, *protometry.NewBox(2, 2, 2, 4, 4, 4), myObj.bounds)
+	equals(t, 1, o.GetNumberOfObjects())
 }
 
 // func BenchmarkOctreeNode_Insert(b *testing.B) {
@@ -149,217 +170,6 @@ func TestOctree_Remove(t *testing.T) {
 // 		for j := 0.; j < size; j++ {
 // 			o.Insert(*NewObject(0, i, j, i))
 // 		}
-// 	}
-// 	b.StopTimer()
-// }
-
-// func TestOctreeNode_Get(t *testing.T) {
-// 	o := boilerplateTree(t)
-// 	objects := o.Get(1, 1, 1, 4, 4, 4)
-// 	equals(t, 3, len(*objects))
-// 	objects = o.Get(1, 1, 1, 3, 3, 3)
-// 	equals(t, 1, len(*objects))
-// 	objects = o.Get(1, 1, 1, 3, 3, 4)
-// 	equals(t, 2, len(*objects))
-// 	objects = o.Get(1, 1, 1, 3, 4, 4)
-// 	equals(t, 3, len(*objects))
-
-// 	o = boilerplateTree(t)
-// 	object := *o.Get(3, 3, 3)
-// 	equals(t, *protometry.NewVectorN(3, 3, 3), object[0].position)
-// 	equals(t, 2, object[0].data)
-// 	object = *o.Get(3, 3, 4)
-// 	equals(t, *protometry.NewVectorN(3, 3, 4), object[0].position)
-// 	equals(t, 3, object[0].data)
-// 	object = *o.Get(3, 4, 4)
-// 	equals(t, *protometry.NewVectorN(3, 4, 4), object[0].position)
-// 	equals(t, 4, object[0].data)
-// 	var nilObjectSlice []Object
-// 	equals(t, &nilObjectSlice, o.Get(4, 4, 4))
-// }
-
-// func BenchmarkOctreeNode_GetMultiple(b *testing.B) {
-// 	size := float64(b.N)
-// 	o := NewOctree(protometry.NewBoxOfSize(*protometry.NewVector3Zero(), size))
-// 	for i := 0.; i < size; i++ {
-// 		for j := 0.; j < size; j++ {
-// 			o.Insert(*NewObject(0, i, j, i))
-// 		}
-// 	}
-// 	b.StartTimer()
-// 	for i := 0.; i < size; i++ {
-// 		for j := 0.; j < size; j++ {
-// 			o.Get(i, j, i, i, j, i)
-// 		}
-// 	}
-// 	b.StopTimer()
-// }
-
-// func BenchmarkOctreeNode_GetOne(b *testing.B) {
-// 	size := float64(b.N)
-// 	o := NewOctree(protometry.NewBoxOfSize(*protometry.NewVector3Zero(), size))
-// 	for i := 0.; i < size; i++ {
-// 		for j := 0.; j < size; j++ {
-// 			o.Insert(*NewObject(0, i, j, i))
-// 		}
-// 	}
-// 	b.StartTimer()
-// 	for i := 0.; i < size; i++ {
-// 		for j := 0.; j < size; j++ {
-// 			o.Get(i, j, i)
-// 		}
-// 	}
-// 	b.StopTimer()
-// }
-
-// func TestOctree_MoveWithoutCollision(t *testing.T) {
-// 	o := boilerplateTree(t)
-// 	// Let's get one object previously inserted in the tree
-// 	resObjects := o.Get(3, 3, 3)
-// 	equals(t, true, resObjects != nil)
-// 	objects := *resObjects
-// 	equals(t, 1, len(objects))
-// 	p := objects[0]
-
-// 	// Let's try to move it
-// 	resObject := o.Move(p, 0, 0, 0)
-// 	equals(t, true, resObject != nil)
-// 	p = *resObject
-
-// 	// It should be moved to the new position
-// 	equals(t, protometry.NewVectorN(0, 0, 0), p.position)
-
-// 	// And there shouldn't be anymore objects in the old position
-// 	resObjects = o.Get(3, 3, 3)
-// 	equals(t, true, resObjects != nil)
-// 	equals(t, 0, len(*resObjects))
-// }
-
-// func TestOctree_MoveWithCollision(t *testing.T) {
-// 	// TODO: implement function find name among:[AddForce, MoveTo, Push ...]
-// 	// either on Octree or ?
-// 	/*
-// 		Should test movement taking into account physics:
-
-// 			_ _ _ _
-// 		   |_|_|_|_|
-// 		   |A|_|_|B|
-// 		   |_|_|_|_|
-// 		   |_|_|_|_|
-
-// 		   A.collider = square of side 1 => |A|
-// 		   B.collider = square of side 1 => |B|
-
-// 		If I try to move B to A position, pushing B to -1;0;0, no gravity
-// 		It should end up like that
-
-// 			_ _ _ _
-// 		   |_|_|_|_|
-// 		   |A|B|_|_|
-// 		   |_|_|_|_|
-// 		   |_|_|_|_|
-// 	*/
-// }
-
-// func TestOctree_Raycast(t *testing.T) {
-// 	o := NewOctree(protometry.NewBox(0, 0, 0, 10, 10, 10))
-// 	p1 := NewCollider(*protometry.NewBox(0, 0, 0, 0, 1, 0)) // Line collider
-// 	ok := o.Insert(*NewObjectCollide(1, p1, *p1.bounds.GetCenter()))
-// 	equals(t, true, ok)
-// 	p2 := NewCollider(*protometry.NewBox(0, 2, 0, 0, 3, 0))
-// 	ok = o.Insert(*NewObjectCollide(2, p2, *p2.bounds.GetCenter()))
-// 	equals(t, true, ok)
-// 	p3 := NewCollider(*protometry.NewBox(0, 4, 0, 0, 5, 0))
-// 	ok = o.Insert(*NewObjectCollide(3, p3, *p3.bounds.GetCenter()))
-// 	equals(t, true, ok)
-
-// 	// Cast a ray toward up from 0;0;0 of length 10
-// 	objects := *o.Raycast(*protometry.NewVector3Zero(), *protometry.NewVectorN(0, 1, 0), 10)
-// 	equals(t, 3, len(objects))
-
-// 	// Cast a ray toward up from 0;0;0 of length 2.5
-// 	objects = *o.Raycast(*protometry.NewVector3Zero(), *protometry.NewVectorN(0, 1, 0), 2.5)
-// 	equals(t, 2, len(objects))
-
-// 	// Cast a ray toward up from 0;2.1;0 of length 7
-// 	objects = *o.Raycast(*protometry.NewVectorN(0, 2.1, 0), *protometry.NewVectorN(0, 1, 0), 7)
-// 	equals(t, 2, len(objects))
-// 	equals(t, p3, objects[len(objects)-1].collider)
-
-// 	// Cast a ray toward up from 0;5.1;0 of length 4
-// 	equals(t, 0, len(*o.Raycast(*protometry.NewVectorN(0, 5.1, 0), *protometry.NewVectorN(0, 1, 0), 4)))
-
-// 	// New octree
-// 	size := 1000.
-// 	o = NewOctree(protometry.NewBoxOfSize(*protometry.NewVector3Zero(), size))
-// 	for i := 0.; i < size; i++ {
-// 		p1 := NewCollider(*protometry.NewBox(0, i, 0, 0, i+1, 0))
-// 		o.Insert(*NewObjectCollide(0, p1, *p1.bounds.GetCenter()))
-// 		o.Raycast(*protometry.NewVectorN(0, i, 0), *protometry.NewVectorN(0, 1, 0), 1)
-// 	}
-// 	equals(t, 1000, len(*o.Raycast(*protometry.NewVectorN(0, 0, 0), *protometry.NewVectorN(0, 1, 0), size)))
-
-// 	// Edge cases
-// 	// New octree
-// 	size = 4.
-// 	o = NewOctree(protometry.NewBox(0, 0, 0, 4, 4, 4))
-
-// 	/*
-// 			_ _ _ _
-// 		   |_|_|_|_|
-// 		   |A|_|_|B|
-// 		   |_|_|_|_|
-// 		   |_|_|_|_|
-
-// 		   A.collider = square of side 1 => |A|
-// 		   B.collider = rectangle of height 1 and width 4 => |_|_|_|B|
-
-// 	*/
-// 	A := NewCollider(*protometry.NewBox(0, 2, 0, 1, 3, 0))
-// 	ok = o.Insert(*NewObjectCollide(0, A, *A.bounds.GetCenter()))
-// 	equals(t, true, ok)
-
-// 	B := NewCollider(*protometry.NewBox(0, 2, 0, 4, 3, 0))
-// 	ok = o.Insert(*NewObjectCollide(0, B, *protometry.NewVectorN(3.5, 2.5, 0)))
-// 	equals(t, true, ok)
-
-// 	/*
-// 		Casting a ray
-
-// 			_ _ _ _
-// 		   |||_|_|_|
-// 		   |A|_|_|B|
-// 		   |||_|_|_|
-// 		   |||_|_|_|
-
-// 		So we should have hit both A and B colliders
-// 	*/
-// 	equals(t, 2, len(*o.Raycast(*protometry.NewVector3Zero(), *protometry.NewVectorN(0, 1, 0), 4)))
-
-// 	/*
-// 		Casting a ray
-
-// 			_ _ _ _
-// 		   |_|_|||_|
-// 		   |A|_|||B|
-// 		   |_|_|||_|
-// 		   |_|_|||_|
-
-// 		So we should have hit only B collider
-// 	*/
-// 	equals(t, 1, len(*o.Raycast(*protometry.NewVectorN(2, 0, 0), *protometry.NewVectorN(0, 1, 0), 4)))
-// }
-
-// func BenchmarkOctreeNode_Raycast(b *testing.B) {
-// 	size := float64(b.N)
-// 	o := NewOctree(protometry.NewBoxOfSize(*protometry.NewVector3Zero(), size))
-// 	for i := 0.; i < size; i++ {
-// 		p1 := NewCollider(*protometry.NewBox(0, i, 0, 0, i+1, 0))
-// 		o.Insert(*NewObjectCollide(0, p1, *p1.bounds.GetCenter()))
-// 	}
-// 	b.StartTimer()
-// 	for i := 0.; i < size; i++ {
-// 		o.Raycast(*protometry.NewVectorN(0, i, 0), *protometry.NewVectorN(0, 1, 0), 1)
 // 	}
 // 	b.StopTimer()
 // }

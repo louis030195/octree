@@ -26,6 +26,11 @@ func (o *Octree) Remove(object Object) *Object {
 	return o.root.remove(object)
 }
 
+// Move object to a new bounds
+func (o *Octree) Move(object Object, newBounds ...float64) *Object {
+	return o.root.move(object, newBounds...)
+}
+
 // GetHeight debug function
 func (o *Octree) GetHeight() int {
 	return o.root.getHeight()
@@ -54,11 +59,6 @@ func (o *Octree) GetColliding(bounds protometry.Box) []Object {
 // // Get object(s) using their center, not their collider
 // func (o *Octree) Get(dims ...float64) *[]Object {
 // 	return o.root.get(dims...)
-// }
-
-// // Move object to a new position
-// func (o *Octree) Move(object Object, newPosition ...float64) *Object {
-// 	return o.root.move(object, newPosition...)
 // }
 
 // // Raycast get all objects colliding with an area

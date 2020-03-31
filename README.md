@@ -16,8 +16,11 @@ go get -u github.com/The-Tensox/octree
 
 ```go
 o := NewOctree(protometry.NewBox(1, 1, 1, 4, 4, 4))
-ok := o.Insert(*NewObjectCube(0, 2, 2, 3, 0.5))
+myObj := NewObjectCube(0, 2, 2, 3, 0.5)
+ok := o.Insert(*myObj)
 colliders := o.GetColliding(*protometry.NewBox(0, 0, 0, 0.9, 2.9, 0.9))
+myObj = o.Move(*myObj, 0, 0, 0, 2, 2, 2) // Using bounds
+myObj = o.Move(*myObj, 3, 3, 3) // Using position, assume cube of side 1
 ```
 
 ## Test

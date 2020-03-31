@@ -66,7 +66,6 @@ func (o *OctreeNode) insert(object Object) bool {
 	return true
 }
 
-// TODO: test, probably incorrect, impl for getmultiple, maybe return object
 func (o *OctreeNode) remove(object Object) *Object {
 	var removedObject *Object
 
@@ -99,6 +98,26 @@ func (o *OctreeNode) remove(object Object) *Object {
 		o.merge()
 	}
 	return removedObject
+}
+
+func (o *OctreeNode) move(object Object, newBounds ...float64) *Object {
+	// Incorrect dimensions
+	if len(newBounds) != 3 && len(newBounds) != 6 {
+		return nil
+	}
+	n := o.remove(object)
+	if n == nil {
+		return n
+	}
+	if len(newBounds) == 3 {
+		n.bounds = *protometry.NewBoxOfSize(*protometry.NewVectorN(newBounds...), 1)
+	} else { // Dimensions = 6
+		n.bounds = *protometry.NewBox(newBounds...)
+	}
+	if res := o.insert(*n); res {
+		return n
+	}
+	return nil
 }
 
 // Splits the OctreeNode into eight children.
@@ -262,22 +281,6 @@ func (o *OctreeNode) merge() {
 // 	}
 
 // 	return &objects
-// }
-
-// func (o *OctreeNode) move(object Object, newPosition ...float64) *Object {
-// 	if len(newPosition) != 3 {
-// 		return nil
-// 	}
-// 	// FIXME
-// 	n := o.remove(object.position.Dimensions...)
-// 	if n == nil {
-// 		return n
-// 	}
-// 	newObject := NewObject(object.data, newPosition...)
-// 	if res := o.insert(*newObject); res {
-// 		return newObject
-// 	}
-// 	return nil
 // }
 
 // func (o *OctreeNode) raycast(origin, direction protometry.VectorN, maxDistance float64) *[]Object {
