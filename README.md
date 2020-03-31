@@ -26,7 +26,7 @@ myObj = o.Move(*myObj, 3, 3, 3) // Using position, assume cube of side 1
 ## Test
 
 ```bash
-go test -v .
+go test
 ```
 
 ## Benchmark
@@ -39,11 +39,6 @@ go test -benchmem -run XXX -bench . -benchtime 0.2s
 ## Roadmap
 
 - [ ] Improve performance, more complexity checks / benchmarks
-- [ ] Take decision either to use ...float64 or protometry.VectorN in args (since there is no overloading in Go ;))
-- [ ] point.OnCollisionEnter(myCallback), point.OnCollisionStay(myCallback2), point.OnCollisionExit(myCallback3) ...
-- [ ] Trigger collision callback on move, insert, remove
-- [ ] Implement "cubecast", fix raycast
-- [ ] Implement shrink, merge
 - [ ] Tree vizualisation ?
 
 ## References
