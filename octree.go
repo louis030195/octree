@@ -22,12 +22,12 @@ func (o *Octree) Insert(object Object) bool {
 }
 
 // Remove object
-func (o *Octree) Remove(object Object) *Object {
+func (o *Octree) Remove(object Object) bool {
 	return o.root.remove(object)
 }
 
-// Move object to a new bounds
-func (o *Octree) Move(object Object, newBounds ...float64) *Object {
+// Move object to a new bounds, pass a pointer because we want to modify the passed object data
+func (o *Octree) Move(object *Object, newBounds ...float64) bool {
 	return o.root.move(object, newBounds...)
 }
 

@@ -66,58 +66,51 @@ func (o *OctreeNode) insert(object Object) bool {
 	return true
 }
 
-func (o *OctreeNode) remove(object Object) *Object {
-	var removedObject *Object
+func (o *OctreeNode) remove(object Object) bool {
+	removedObject := false
 
 	// Object outside bounds
 	if !object.bounds.Fit(o.region) {
-		return removedObject // nil
+		return false
 	}
 
 	for i := 0; i < len(o.objects); i++ {
 		// Found it ? delete it and return a copy
 		if o.objects[i].Equal(object) {
-			removedObject = &o.objects[i]
 			// https://stackoverflow.com/questions/37334119/how-to-delete-an-element-from-a-slice-in-golang
 			o.objects = append(o.objects[:i], o.objects[i+1:]...)
-			return removedObject
+			return true
 		}
 	}
 
 	if o.children != nil {
 		for i := range o.children {
-			if removedObject = o.children[i].remove(object); removedObject != nil {
+			if o.children[i].remove(object) {
+				removedObject = true
 				break
 			}
 		}
 	}
 
 	// Successfully removed in children
-	if removedObject != nil {
+	if removedObject {
 		// Try to merge nodes now that we've removed an item
 		o.merge()
 	}
 	return removedObject
 }
 
-func (o *OctreeNode) move(object Object, newBounds ...float64) *Object {
+func (o *OctreeNode) move(object *Object, newBounds ...float64) bool {
 	// Incorrect dimensions
-	if len(newBounds) != 3 && len(newBounds) != 6 {
-		return nil
-	}
-	n := o.remove(object)
-	if n == nil {
-		return n
+	if (len(newBounds) != 3 && len(newBounds) != 6) || !o.remove(*object) {
+		return false
 	}
 	if len(newBounds) == 3 {
-		n.bounds = *protometry.NewBoxOfSize(*protometry.NewVectorN(newBounds...), 1)
+		object.bounds = *protometry.NewBoxOfSize(*protometry.NewVectorN(newBounds...), 1)
 	} else { // Dimensions = 6
-		n.bounds = *protometry.NewBox(newBounds...)
+		object.bounds = *protometry.NewBox(newBounds...)
 	}
-	if res := o.insert(*n); res {
-		return n
-	}
-	return nil
+	return o.insert(*object)
 }
 
 // Splits the OctreeNode into eight children.
@@ -210,9 +203,20 @@ func (o *OctreeNode) getAllObjects() []Object {
  * Note: We only have to check one level down since a merge will never happen if the children already have children,
  * since THAT won't happen unless there are already too many objects to merge.
  */
-func (o *OctreeNode) merge() {
-	if o.getNumberOfObjects() > CAPACITY {
-		return
+func (o *OctreeNode) merge() bool {
+	totalObjects := len(o.objects)
+	if o.children != nil {
+		for _, child := range o.children {
+			if child.children != nil {
+				// If any of the *children* have children, there are definitely too many to merge,
+				// or the child woudl have been merged already
+				return false
+			}
+			totalObjects += len(child.objects)
+		}
+	}
+	if totalObjects > CAPACITY {
+		return false
 	}
 
 	// Note: We know children != null or we wouldn't be merging
@@ -226,6 +230,7 @@ func (o *OctreeNode) merge() {
 	}
 	// Remove the child nodes (and the objects in them - they've been added elsewhere now)
 	o.children = nil
+	return true
 }
 
 // /*
