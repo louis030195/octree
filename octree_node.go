@@ -30,8 +30,8 @@ type OctreeNode struct {
 
 // Insert ...
 func (o *OctreeNode) insert(object Object) bool {
-	// Object bounds doesn't fit in node region => return false
-	if !object.bounds.Fit(o.region) {
+	// Object Bounds doesn't fit in node region => return false
+	if !object.Bounds.Fit(o.region) {
 		return false
 	}
 
@@ -69,8 +69,8 @@ func (o *OctreeNode) insert(object Object) bool {
 func (o *OctreeNode) remove(object Object) bool {
 	removedObject := false
 
-	// Object outside bounds
-	if !object.bounds.Fit(o.region) {
+	// Object outside Bounds
+	if !object.Bounds.Fit(o.region) {
 		return false
 	}
 
@@ -106,9 +106,9 @@ func (o *OctreeNode) move(object *Object, newBounds ...float64) bool {
 		return false
 	}
 	if len(newBounds) == 3 {
-		object.bounds = *protometry.NewBoxOfSize(*protometry.NewVectorN(newBounds...), 1)
+		object.Bounds = *protometry.NewBoxOfSize(*protometry.NewVectorN(newBounds...), 1)
 	} else { // Dimensions = 6
-		object.bounds = *protometry.NewBox(newBounds...)
+		object.Bounds = *protometry.NewBox(newBounds...)
 	}
 	return o.insert(*object)
 }
@@ -161,7 +161,7 @@ func (o *OctreeNode) getNumberOfObjects() int {
 }
 
 func (o *OctreeNode) getColliding(bounds protometry.Box) []Object {
-	// If current node region entirely fit inside desired bounds,
+	// If current node region entirely fit inside desired Bounds,
 	// No need to search somewhere else => return all objects
 	if o.region.Fit(bounds) {
 		return o.getAllObjects()
@@ -173,7 +173,7 @@ func (o *OctreeNode) getColliding(bounds protometry.Box) []Object {
 	}
 	// return objects that intersects with bounds and its children's objects
 	for _, obj := range o.objects {
-		if obj.bounds.Intersects(bounds) {
+		if obj.Bounds.Intersects(bounds) {
 			objects = append(objects, obj)
 		}
 	}
@@ -300,7 +300,7 @@ func (o *OctreeNode) merge() bool {
 
 // 	// Check objects at this level
 // 	for i := range o.objects {
-// 		in, err := o.objects[i].collider.bounds.Intersects(ray)
+// 		in, err := o.objects[i].collider.Bounds.Intersects(ray)
 // 		if err == nil && in {
 // 			objects = append(objects, o.objects[i])
 // 		}

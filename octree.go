@@ -26,7 +26,7 @@ func (o *Octree) Remove(object Object) bool {
 	return o.root.remove(object)
 }
 
-// Move object to a new bounds, pass a pointer because we want to modify the passed object data
+// Move object to a new Bounds, pass a pointer because we want to modify the passed object data
 func (o *Octree) Move(object *Object, newBounds ...float64) bool {
 	return o.root.move(object, newBounds...)
 }

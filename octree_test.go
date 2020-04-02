@@ -89,8 +89,8 @@ func TestOctreeNode_GetColliding(t *testing.T) {
 	equals(t, 2, len(colliders))
 	colliders = o.GetColliding(*protometry.NewBox(1, 1, 1, 1.1, 1.1, 1.1))
 	equals(t, 2, len(colliders))
-	equals(t, 6, colliders[0].data)
-	equals(t, 7, colliders[1].data)
+	equals(t, 6, colliders[0].Data)
+	equals(t, 7, colliders[1].Data)
 }
 
 func TestOctree_Remove(t *testing.T) {
@@ -143,16 +143,16 @@ func TestOctree_Remove(t *testing.T) {
 func TestOctree_Move(t *testing.T) {
 	o := NewOctree(protometry.NewBoxOfSize(*protometry.NewVector3Zero(), 10))
 	myObj := NewObjectCube(0, 0, 0, 0, 1)
-	equals(t, *protometry.NewBox(-1, -1, -1, 1, 1, 1), myObj.bounds)
+	equals(t, *protometry.NewBox(-1, -1, -1, 1, 1, 1), myObj.Bounds)
 	equals(t, true, o.Insert(*myObj))
 	equals(t, 1, o.GetNumberOfObjects())
-	// Using bounds
+	// Using Bounds
 	equals(t, true, o.Move(myObj, 0, 0, 0, 2, 2, 2))
-	equals(t, *protometry.NewBox(0, 0, 0, 2, 2, 2), myObj.bounds)
+	equals(t, *protometry.NewBox(0, 0, 0, 2, 2, 2), myObj.Bounds)
 	equals(t, 1, o.GetNumberOfObjects())
 	// Using position
 	equals(t, true, o.Move(myObj, 3, 3, 3))
-	equals(t, *protometry.NewBox(2, 2, 2, 4, 4, 4), myObj.bounds)
+	equals(t, *protometry.NewBox(2, 2, 2, 4, 4, 4), myObj.Bounds)
 	equals(t, 1, o.GetNumberOfObjects())
 }
 
