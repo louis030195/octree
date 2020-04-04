@@ -2,6 +2,8 @@ github.com/The-Tensox/protometry v0.0.0-20200329130950-c934b9e61afa h1:3t19oiUKE
 github.com/The-Tensox/protometry v0.0.0-20200329130950-c934b9e61afa/go.mod h1:VbYEXDN4pIGMe2wZ5dxVMXXdZl8bY7avbECj8JKxoJM=
 github.com/The-Tensox/protometry v0.0.0-20200329160116-a97dbae83b93 h1:TQLM5kN9/eLkzCVvPE0QxjP6DdCRo6pR4Ann88+bH+g=
 github.com/The-Tensox/protometry v0.0.0-20200329160116-a97dbae83b93/go.mod h1:VbYEXDN4pIGMe2wZ5dxVMXXdZl8bY7avbECj8JKxoJM=
+github.com/The-Tensox/protometry v0.0.0-20200402182624-0a8c69d9271d h1:JhweHigmkKysV3i/VsRiIpmxcS/bHETzZELppQtEsPA=
+github.com/The-Tensox/protometry v0.0.0-20200402182624-0a8c69d9271d/go.mod h1:VbYEXDN4pIGMe2wZ5dxVMXXdZl8bY7avbECj8JKxoJM=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/golang/protobuf v1.3.4 h1:87PNWwrRvUSnqS4dlcBU/ftvOIBep4sYuBLlh6rX2wk=
 github.com/golang/protobuf v1.3.4/go.mod h1:vzj43D7+SQXF/4pzW/hwtAqwc6iTitCiVSaWz5lYuqw=

@@ -5,18 +5,6 @@ import (
 )
 
 // FIXME
-const (
-	TLF = iota // top left front
-	TRF        // top right front
-	BRF        // bottom right front
-	BLF        // bottom left front
-	TLB        // top left back
-	TRB        // top right back
-	BRB        // bottom right back
-	BLB        // bottom left back
-)
-
-// FIXME
 var (
 	CAPACITY = 5
 )
@@ -54,6 +42,7 @@ func (o *OctreeNode) insert(object Object) bool {
 		for i := range objects {
 			o.insert(objects[i])
 		}
+
 	}
 
 	// Children isn't nil => try to add in children otherwise add in objects
@@ -106,16 +95,16 @@ func (o *OctreeNode) move(object *Object, newBounds ...float64) bool {
 		return false
 	}
 	if len(newBounds) == 3 {
-		object.Bounds = *protometry.NewBoxOfSize(*protometry.NewVectorN(newBounds...), 1)
+		object.Bounds = *protometry.NewBoxOfSize(*protometry.NewVectorN(newBounds...), object.Bounds.Extents.Get(0)*2)
 	} else { // Dimensions = 6
-		object.Bounds = *protometry.NewBox(newBounds...)
+		object.Bounds = *protometry.NewBoxMinMax(newBounds...)
 	}
 	return o.insert(*object)
 }
 
 // Splits the OctreeNode into eight children.
 func (o *OctreeNode) split() {
-	subBoxes := o.region.MakeSubBoxes()
+	subBoxes := o.region.Split()
 	o.children = &[8]OctreeNode{}
 	for i := range subBoxes {
 		o.children[i] = OctreeNode{region: *subBoxes[i]}
@@ -232,144 +221,3 @@ func (o *OctreeNode) merge() bool {
 	o.children = nil
 	return true
 }
-
-// /*
-//  * We can shrink the octree if:
-//  * - This node is >= double minLength in length
-//  * - All objects in the root node are within one octant
-//  * - This node doesn't have children, or does but 7/8 children are empty
-//  * We can also shrink it if there are no objects left at all!
-//  * TODO: to be tested
-//  */
-// func (o *OctreeNode) shrink() OctreeNode {
-// 	return OctreeNode{}
-// }
-
-// // get return Object(s) based on their position only
-// func (o *OctreeNode) get(dims ...float64) *[]Object {
-// 	// Prepare an array of results
-// 	var objects []Object
-// 	var region *protometry.Box
-// 	var ok bool
-// 	var err error
-
-// 	// We're looking for Object(s) at a precise position
-// 	if len(dims) == 3 {
-// 		region = protometry.NewBox(dims[0], dims[1], dims[2], dims[0], dims[1], dims[2]) // Ugly
-// 	} else if len(dims) == 6 { // We're looking for Object(s) inside a region
-// 		region = protometry.NewBox(dims[0], dims[1], dims[2], dims[3], dims[4], dims[5]) // Ugly
-// 	}
-// 	// Automatically abort if the range does not intersect this
-// 	ok, err = o.region.Intersects(*region)
-// 	if err != nil || !ok {
-// 		return &objects
-// 	}
-
-// 	// Check objects at this level
-// 	for i := range o.objects {
-// 		ok, err = o.objects[i].position.In(*region)
-// 		if err == nil && ok {
-// 			objects = append(objects, o.objects[i])
-// 		}
-// 	}
-
-// 	// Terminate here, if there are no children
-// 	if o.children == nil {
-// 		return &objects
-// 	}
-
-// 	// Otherwise, add the objects from the children
-// 	for i := range o.children {
-// 		if n := o.children[i].get(dims...); n != nil {
-// 			objects = append(objects, *n...)
-// 		}
-// 	}
-
-// 	return &objects
-// }
-
-// func (o *OctreeNode) raycast(origin, direction protometry.VectorN, maxDistance float64) *[]Object {
-// 	// Prepare an array of results
-// 	var objects []Object
-// 	var destination *protometry.VectorN = protometry.NewVectorN(maxDistance, maxDistance, maxDistance)
-// 	if maxDistance != math.MaxFloat64 {
-// 		destination = direction.Mul(maxDistance)
-// 	}
-// 	destination = destination.Add(origin)
-// 	ray := *protometry.NewBox(origin.Get(0), origin.Get(1), origin.Get(2), destination.Get(0), destination.Get(1), destination.Get(2))
-
-// 	// Check objects at this level
-// 	for i := range o.objects {
-// 		in, err := o.objects[i].collider.Bounds.Intersects(ray)
-// 		if err == nil && in {
-// 			objects = append(objects, o.objects[i])
-// 		}
-// 	}
-
-// 	// Terminate here, if there are no children
-// 	if o.children == nil {
-// 		return &objects
-// 	}
-
-// 	// Otherwise, add the objects from the children
-// 	for i := range o.children {
-// 		// TODO: we can just move origin now
-// 		if n := o.children[i].raycast(origin, direction, maxDistance); n != nil {
-// 			objects = append(objects, *n...)
-// 		}
-// 	}
-
-// 	return &objects
-// }
-
-// /*
-// // ToString Get a human readable representation of the state of
-// // this node and its contents.
-// func (o *OctreeNode) ToString() string {
-// 	return o.recursiveToString("", "  ")
-// }
-
-// func (o *OctreeNode) recursiveToString(curIndent, stepIndent string) string {
-// 	singleIndent := curIndent + stepIndent
-
-// 	// default values
-// 	childStr := "nil"
-// 	pointsStr := "nil"
-
-// 	if o.children != nil {
-// 		doubleIndent := singleIndent + stepIndent
-
-// 		// accumulate child strings
-// 		childStr = ""
-// 		for i, child := range o.children {
-// 			childStr = childStr + fmt.Sprintf("%v%d: %v,\n", doubleIndent, i, child.recursiveToString(doubleIndent, stepIndent))
-// 		}
-
-// 		childStr = fmt.Sprintf("[\n%v%v]", childStr, singleIndent)
-// 	}
-
-// 	for _, object := range o.objects {
-// 		pointsStr = pointsStr + fmt.Sprintf("%v%v", singleIndent+stepIndent, object)
-// 	}
-
-// 	return fmt.Sprintf("Node{\n%vregion: %v,\n%vpoints: %v,\n%vchildren: %v,%v\n%v}", singleIndent, o.region, singleIndent, pointsStr, singleIndent, childStr, singleIndent, curIndent)
-// }
-// */
-
-// /*
-//  * Return the best fit this position should be placed among children
-//  */
-// func (o *OctreeNode) bestFit(position protometry.VectorN) int {
-// 	oct := 0
-// 	center := o.region.GetCenter()
-// 	if position.Get(0) <= center.Get(0) {
-// 		oct |= 4
-// 	}
-// 	if position.Get(1) <= center.Get(1) {
-// 		oct |= 2
-// 	}
-// 	if position.Get(2) <= center.Get(2) {
-// 		oct |= 1
-// 	}
-// 	return oct
-// }

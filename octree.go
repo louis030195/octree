@@ -21,6 +21,12 @@ func (o *Octree) Insert(object Object) bool {
 	return o.root.insert(object)
 }
 
+// GetColliding returns an array of objects that intersect with the specified bounds, if any.
+// Otherwise returns an empty array.
+func (o *Octree) GetColliding(bounds protometry.Box) []Object {
+	return o.root.getColliding(bounds)
+}
+
 // Remove object
 func (o *Octree) Remove(object Object) bool {
 	return o.root.remove(object)
@@ -46,28 +52,7 @@ func (o *Octree) GetNumberOfObjects() int {
 	return o.root.getNumberOfObjects()
 }
 
+// GetUsage ...
 func (o *Octree) GetUsage() float64 {
 	return float64(o.GetNumberOfObjects()) / float64(o.GetNumberOfNodes()*CAPACITY)
 }
-
-// GetColliding returns an array of objects that intersect with the specified bounds, if any.
-// Otherwise returns an empty array.
-func (o *Octree) GetColliding(bounds protometry.Box) []Object {
-	return o.root.getColliding(bounds)
-}
-
-// // Get object(s) using their center, not their collider
-// func (o *Octree) Get(dims ...float64) *[]Object {
-// 	return o.root.get(dims...)
-// }
-
-// // Raycast get all objects colliding with an area
-// func (o *Octree) Raycast(origin, direction protometry.VectorN, maxDistance float64) *[]Object {
-// 	return o.root.raycast(origin, direction, maxDistance)
-// }
-
-/*
-func (o *Octree) ToString() string {
-	return o.root.ToString()
-}
-*/

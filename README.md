@@ -15,10 +15,10 @@ go get -u github.com/The-Tensox/octree
 ## Usage
 
 ```go
-o := NewOctree(protometry.NewBox(1, 1, 1, 4, 4, 4))
+o := NewOctree(protometry.NewBoxMinMax(1, 1, 1, 4, 4, 4))
 myObj := NewObjectCube(0, 2, 2, 3, 0.5)
 ok := o.Insert(*myObj)
-colliders := o.GetColliding(*protometry.NewBox(0, 0, 0, 0.9, 2.9, 0.9))
+colliders := o.GetColliding(*protometry.NewBoxMinMax(0, 0, 0, 0.9, 2.9, 0.9))
 myObj = o.Move(*myObj, 0, 0, 0, 2, 2, 2) // Using bounds
 myObj = o.Move(*myObj, 3, 3, 3) // Using position, assume cube of side 1
 ```
@@ -35,6 +35,13 @@ go test
 # XXX will skip tests
 go test -benchmem -run XXX -bench . -benchtime 0.2s
 ```
+
+|Name   |   Runs   |   time   |   Bytes   |   Allocs   |
+|:-----:|:--------:|:--------:|:---------:|:----------:|
+|BenchmarkOctreeNode_Insert-8   |   43530   |   5192 ns/op   |   1658 B/op  |   23 allocs/op   |
+|BenchmarkOctreeNode_GetColliding-8   |   10000   |   21816 ns/op   |   8748 B/op   |   47 allocs/op   |
+|BenchmarkOctreeNode_Remove-8   |   25642   |   9252 ns/op   |   2344 B/op   |   21 allocs/op   |
+|BenchmarkOctreeNode_Move-8   |   13378   |   17764 ns/op   |   3791 B/op   |   45 allocs/op   |
 
 ## Roadmap
 
