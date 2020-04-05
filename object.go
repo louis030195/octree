@@ -1,6 +1,9 @@
 package octree
 
-import "github.com/The-Tensox/protometry"
+import (
+	"fmt"
+	"github.com/The-Tensox/protometry"
+)
 
 // Object stores data and bounds
 type Object struct {
@@ -20,4 +23,8 @@ func NewObjectCube(data interface{}, x, y, z, size float64) *Object {
 func (o *Object) Equal(object Object) bool {
 	return o.Data == object.Data && o.Bounds.Equal(object.Bounds)
 
+}
+
+func (o *Object) ToString() string {
+	return fmt.Sprintf("Data:%v\nBounds:{\n%v\n}", o.Data, o.Bounds.ToString())
 }

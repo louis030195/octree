@@ -1,6 +1,7 @@
 package octree
 
 import (
+	"fmt"
 	"github.com/The-Tensox/protometry"
 )
 
@@ -55,4 +56,8 @@ func (o *Octree) GetNumberOfObjects() int {
 // GetUsage ...
 func (o *Octree) GetUsage() float64 {
 	return float64(o.GetNumberOfObjects()) / float64(o.GetNumberOfNodes()*CAPACITY)
+}
+
+func (o *Octree) ToString(verbose bool) string {
+	return fmt.Sprintf( "Octree: {\n%v\n}", o.root.toString(verbose))
 }

@@ -216,6 +216,16 @@ func TestOctree_GetUsage(t *testing.T) {
 	equals(t, float64(o.GetNumberOfObjects())/float64(o.GetNumberOfNodes()*CAPACITY), o.GetUsage())
 }
 
+
+func TestOctree_ToString(t *testing.T) {
+	size := 20.
+	o := NewOctree(protometry.NewBoxOfSize(*protometry.NewVector3Zero(), size*2))
+	for i := 0.; i < size; i++ {
+		equals(t, true, o.Insert(*NewObjectCube(0, i, i, i, 2)))
+	}
+	t.Log(o.ToString(false))
+}
+
 /* * * BENCHES * * */
 func BenchmarkNode_Insert(b *testing.B) {
 	b.StartTimer()

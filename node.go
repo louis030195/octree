@@ -1,6 +1,7 @@
 package octree
 
 import (
+	"fmt"
 	"github.com/The-Tensox/protometry"
 )
 
@@ -17,64 +18,64 @@ type Node struct {
 }
 
 // Insert ...
-func (o *Node) insert(object Object) bool {
+func (n *Node) insert(object Object) bool {
 	// Object Bounds doesn't fit in node region => return false
-	if !object.Bounds.Fit(o.region) {
+	if !object.Bounds.Fit(n.region) {
 		return false
 	}
 
 	// Number of objects < CAPACITY and children is nil => add in objects
-	if len(o.objects) < CAPACITY && o.children == nil {
-		o.objects = append(o.objects, object)
+	if len(n.objects) < CAPACITY && n.children == nil {
+		n.objects = append(n.objects, object)
 		return true
 	}
 
 	// Number of objects >= CAPACITY and children is nil => create children,
 	// try to move all objects in children
 	// and try to add in children otherwise add in objects
-	if len(o.objects) >= CAPACITY && o.children == nil {
-		o.split()
+	if len(n.objects) >= CAPACITY && n.children == nil {
+		n.split()
 
-		objects := o.objects
-		o.objects = []Object{}
+		objects := n.objects
+		n.objects = []Object{}
 
 		// Move old objects to children
 		for i := range objects {
-			o.insert(objects[i])
+			n.insert(objects[i])
 		}
 
 	}
 
 	// Children isn't nil => try to add in children otherwise add in objects
-	for i := range o.children {
-		if o.children[i].insert(object) {
+	for i := range n.children {
+		if n.children[i].insert(object) {
 			return true
 		}
 	}
-	o.objects = append(o.objects, object)
+	n.objects = append(n.objects, object)
 	return true
 }
 
-func (o *Node) remove(object Object) bool {
+func (n *Node) remove(object Object) bool {
 	removedObject := false
 
 	// Object outside Bounds
-	if !object.Bounds.Fit(o.region) {
+	if !object.Bounds.Fit(n.region) {
 		return false
 	}
 
-	for i := 0; i < len(o.objects); i++ {
+	for i := 0; i < len(n.objects); i++ {
 		// Found it ? delete it and return a copy
-		if o.objects[i].Equal(object) {
+		if n.objects[i].Equal(object) {
 			// https://stackoverflow.com/questions/37334119/how-to-delete-an-element-from-a-slice-in-golang
-			o.objects = append(o.objects[:i], o.objects[i+1:]...)
+			n.objects = append(n.objects[:i], n.objects[i+1:]...)
 			return true
 		}
 	}
 
-	if o.children != nil {
-		for i := range o.children {
-			if o.children[i].remove(object) {
+	if n.children != nil {
+		for i := range n.children {
+			if n.children[i].remove(object) {
 				removedObject = true
 				break
 			}
@@ -84,14 +85,14 @@ func (o *Node) remove(object Object) bool {
 	// Successfully removed in children
 	if removedObject {
 		// Try to merge nodes now that we've removed an item
-		o.merge()
+		n.merge()
 	}
 	return removedObject
 }
 
-func (o *Node) move(object *Object, newBounds ...float64) bool {
+func (n *Node) move(object *Object, newBounds ...float64) bool {
 	// Incorrect dimensions
-	if (len(newBounds) != 3 && len(newBounds) != 6) || !o.remove(*object) {
+	if (len(newBounds) != 3 && len(newBounds) != 6) || !n.remove(*object) {
 		return false
 	}
 	if len(newBounds) == 3 {
@@ -99,24 +100,24 @@ func (o *Node) move(object *Object, newBounds ...float64) bool {
 	} else { // Dimensions = 6
 		object.Bounds = *protometry.NewBoxMinMax(newBounds...)
 	}
-	return o.insert(*object)
+	return n.insert(*object)
 }
 
 // Splits the Node into eight children.
-func (o *Node) split() {
-	subBoxes := o.region.Split()
-	o.children = &[8]Node{}
+func (n *Node) split() {
+	subBoxes := n.region.Split()
+	n.children = &[8]Node{}
 	for i := range subBoxes {
-		o.children[i] = Node{region: *subBoxes[i]}
+		n.children[i] = Node{region: *subBoxes[i]}
 	}
 }
 
-func (o *Node) getHeight() int {
-	if o.children == nil {
+func (n *Node) getHeight() int {
+	if n.children == nil {
 		return 1
 	}
 	max := 0
-	for _, c := range o.children {
+	for _, c := range n.children {
 		h := c.getHeight()
 		if h > max {
 			max = h
@@ -125,64 +126,64 @@ func (o *Node) getHeight() int {
 	return max + 1
 }
 
-func (o *Node) getNumberOfNodes() int {
-	if o.children == nil {
+func (n *Node) getNumberOfNodes() int {
+	if n.children == nil {
 		return 1
 	}
-	sum := len(o.children)
-	for _, c := range o.children {
+	sum := len(n.children)
+	for _, c := range n.children {
 		n := c.getNumberOfNodes()
 		sum += n
 	}
 	return sum
 }
 
-func (o *Node) getNumberOfObjects() int {
-	if o.children == nil {
-		return len(o.objects)
+func (n *Node) getNumberOfObjects() int {
+	if n.children == nil {
+		return len(n.objects)
 	}
-	sum := len(o.objects)
-	for _, c := range o.children {
+	sum := len(n.objects)
+	for _, c := range n.children {
 		n := c.getNumberOfObjects()
 		sum += n
 	}
 	return sum
 }
 
-func (o *Node) getColliding(bounds protometry.Box) []Object {
+func (n *Node) getColliding(bounds protometry.Box) []Object {
 	// If current node region entirely fit inside desired Bounds,
 	// No need to search somewhere else => return all objects
-	if o.region.Fit(bounds) {
-		return o.getAllObjects()
+	if n.region.Fit(bounds) {
+		return n.getAllObjects()
 	}
 	var objects []Object
 	// If bounds doesn't intersects with region, no collision here => return empty
-	if !o.region.Intersects(bounds) {
+	if !n.region.Intersects(bounds) {
 		return objects
 	}
 	// return objects that intersects with bounds and its children's objects
-	for _, obj := range o.objects {
+	for _, obj := range n.objects {
 		if obj.Bounds.Intersects(bounds) {
 			objects = append(objects, obj)
 		}
 	}
 	// No children ? Stop here
-	if o.children == nil {
+	if n.children == nil {
 		return objects
 	}
 	// Get the colliding children
-	for _, c := range o.children {
+	for _, c := range n.children {
 		objects = append(objects, c.getColliding(bounds)...)
 	}
 	return objects
 }
 
-func (o *Node) getAllObjects() []Object {
+func (n *Node) getAllObjects() []Object {
 	var objects []Object
-	if o.children == nil {
-		return o.objects
+	if n.children == nil {
+		return n.objects
 	}
-	for _, c := range o.children {
+	for _, c := range n.children {
 		objects = append(objects, c.getAllObjects()...)
 	}
 	return objects
@@ -192,10 +193,10 @@ func (o *Node) getAllObjects() []Object {
  * Note: We only have to check one level down since a merge will never happen if the children already have children,
  * since THAT won't happen unless there are already too many objects to merge.
  */
-func (o *Node) merge() bool {
-	totalObjects := len(o.objects)
-	if o.children != nil {
-		for _, child := range o.children {
+func (n *Node) merge() bool {
+	totalObjects := len(n.objects)
+	if n.children != nil {
+		for _, child := range n.children {
 			if child.children != nil {
 				// If any of the *children* have children, there are definitely too many to merge,
 				// or the child would have been merged already
@@ -209,15 +210,39 @@ func (o *Node) merge() bool {
 	}
 
 	// Note: We know children != null or we wouldn't be merging
-	for i := range o.children {
-		curChild := o.children[i]
+	for i := range n.children {
+		curChild := n.children[i]
 		numObjects := len(curChild.objects)
 		for j := numObjects - 1; j >= 0; j-- {
 			curObj := curChild.objects[j]
-			o.objects = append(o.objects, curObj)
+			n.objects = append(n.objects, curObj)
 		}
 	}
 	// Remove the child nodes (and the objects in them - they've been added elsewhere now)
-	o.children = nil
+	n.children = nil
 	return true
+}
+
+func (n *Node) toString(verbose bool) string {
+	var s string
+	s = ",\nobjects: [\n"
+	if verbose {
+		for _, o := range n.objects {
+			s += fmt.Sprintf("%v,\n", o.ToString())
+		}
+	} else {
+		s += fmt.Sprintf("%v objects,\n", len(n.objects))
+	}
+	s += "]\n,children: [\n"
+	if verbose {
+		if n.children != nil {
+			for _, c := range n.children {
+				s += fmt.Sprintf( "%v,\n", c.toString(verbose))
+			}
+		}
+	} else {
+		s += fmt.Sprintf("%v children,\n", len(n.children))
+	}
+	s += "],\n"
+	return s
 }
