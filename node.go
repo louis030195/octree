@@ -9,15 +9,15 @@ var (
 	CAPACITY = 5
 )
 
-// OctreeNode ...
-type OctreeNode struct {
+// Node ...
+type Node struct {
 	objects  []Object
 	region   protometry.Box
-	children *[8]OctreeNode
+	children *[8]Node
 }
 
 // Insert ...
-func (o *OctreeNode) insert(object Object) bool {
+func (o *Node) insert(object Object) bool {
 	// Object Bounds doesn't fit in node region => return false
 	if !object.Bounds.Fit(o.region) {
 		return false
@@ -55,7 +55,7 @@ func (o *OctreeNode) insert(object Object) bool {
 	return true
 }
 
-func (o *OctreeNode) remove(object Object) bool {
+func (o *Node) remove(object Object) bool {
 	removedObject := false
 
 	// Object outside Bounds
@@ -89,7 +89,7 @@ func (o *OctreeNode) remove(object Object) bool {
 	return removedObject
 }
 
-func (o *OctreeNode) move(object *Object, newBounds ...float64) bool {
+func (o *Node) move(object *Object, newBounds ...float64) bool {
 	// Incorrect dimensions
 	if (len(newBounds) != 3 && len(newBounds) != 6) || !o.remove(*object) {
 		return false
@@ -102,16 +102,16 @@ func (o *OctreeNode) move(object *Object, newBounds ...float64) bool {
 	return o.insert(*object)
 }
 
-// Splits the OctreeNode into eight children.
-func (o *OctreeNode) split() {
+// Splits the Node into eight children.
+func (o *Node) split() {
 	subBoxes := o.region.Split()
-	o.children = &[8]OctreeNode{}
+	o.children = &[8]Node{}
 	for i := range subBoxes {
-		o.children[i] = OctreeNode{region: *subBoxes[i]}
+		o.children[i] = Node{region: *subBoxes[i]}
 	}
 }
 
-func (o *OctreeNode) getHeight() int {
+func (o *Node) getHeight() int {
 	if o.children == nil {
 		return 1
 	}
@@ -125,7 +125,7 @@ func (o *OctreeNode) getHeight() int {
 	return max + 1
 }
 
-func (o *OctreeNode) getNumberOfNodes() int {
+func (o *Node) getNumberOfNodes() int {
 	if o.children == nil {
 		return 1
 	}
@@ -137,7 +137,7 @@ func (o *OctreeNode) getNumberOfNodes() int {
 	return sum
 }
 
-func (o *OctreeNode) getNumberOfObjects() int {
+func (o *Node) getNumberOfObjects() int {
 	if o.children == nil {
 		return len(o.objects)
 	}
@@ -149,7 +149,7 @@ func (o *OctreeNode) getNumberOfObjects() int {
 	return sum
 }
 
-func (o *OctreeNode) getColliding(bounds protometry.Box) []Object {
+func (o *Node) getColliding(bounds protometry.Box) []Object {
 	// If current node region entirely fit inside desired Bounds,
 	// No need to search somewhere else => return all objects
 	if o.region.Fit(bounds) {
@@ -177,7 +177,7 @@ func (o *OctreeNode) getColliding(bounds protometry.Box) []Object {
 	return objects
 }
 
-func (o *OctreeNode) getAllObjects() []Object {
+func (o *Node) getAllObjects() []Object {
 	var objects []Object
 	if o.children == nil {
 		return o.objects
@@ -192,13 +192,13 @@ func (o *OctreeNode) getAllObjects() []Object {
  * Note: We only have to check one level down since a merge will never happen if the children already have children,
  * since THAT won't happen unless there are already too many objects to merge.
  */
-func (o *OctreeNode) merge() bool {
+func (o *Node) merge() bool {
 	totalObjects := len(o.objects)
 	if o.children != nil {
 		for _, child := range o.children {
 			if child.children != nil {
 				// If any of the *children* have children, there are definitely too many to merge,
-				// or the child woudl have been merged already
+				// or the child would have been merged already
 				return false
 			}
 			totalObjects += len(child.objects)

@@ -16,4 +16,8 @@ build
 vendor/
 
 # Vscode # https://github.com/Microsoft/vscode-go/wiki/Debugging-Go-code-using-VS-Code
-launch.json 
+launch.json
+.vscode
+
+# Idea
+.idea

@@ -36,12 +36,24 @@ go test
 go test -benchmem -run XXX -bench . -benchtime 0.2s
 ```
 
+THEN
+
 |Name   |   Runs   |   time   |   Bytes   |   Allocs   |
 |:-----:|:--------:|:--------:|:---------:|:----------:|
-|BenchmarkOctreeNode_Insert-8   |   43530   |   5192 ns/op   |   1658 B/op  |   23 allocs/op   |
-|BenchmarkOctreeNode_GetColliding-8   |   10000   |   21816 ns/op   |   8748 B/op   |   47 allocs/op   |
-|BenchmarkOctreeNode_Remove-8   |   25642   |   9252 ns/op   |   2344 B/op   |   21 allocs/op   |
-|BenchmarkOctreeNode_Move-8   |   13378   |   17764 ns/op   |   3791 B/op   |   45 allocs/op   |
+|BenchmarkNode_Insert-8   |   43530   |   5192 ns/op   |   1658 B/op  |   23 allocs/op   |
+|BenchmarkNode_GetColliding-8   |   10000   |   21816 ns/op   |   8748 B/op   |   47 allocs/op   |
+|BenchmarkNode_Remove-8   |   25642   |   9252 ns/op   |   2344 B/op   |   21 allocs/op   |
+|BenchmarkNode_Move-8   |   13378   |   17764 ns/op   |   3791 B/op   |   45 allocs/op   |
+
+ ---
+NOW
+
+|Name   |   Runs   |   time   |   Bytes   |   Allocs   |
+|:-----:|:--------:|:--------:|:---------:|:----------:|
+|BenchmarkNode_Insert-8   |   15242   |   74134 ns/op   |   28540 B/op  |   920 allocs/op   |
+|BenchmarkNode_GetColliding-8   |   5514   |   360566 ns/op   |   128144 B/op   |   4098 allocs/op   |
+|BenchmarkNode_Remove-8   |   10000   |   146253 ns/op   |   52386 B/op   |   1678 allocs/op   |
+|BenchmarkNode_Move-8   |   7546   |   235199 ns/op   |   88335 B/op   |   2870 allocs/op   |
 
 ## Roadmap
 

@@ -6,13 +6,13 @@ import (
 
 // Octree ...
 type Octree struct {
-	root *OctreeNode
+	root *Node
 }
 
 // NewOctree is a Octree constructor for ease of use
 func NewOctree(region *protometry.Box) *Octree {
 	return &Octree{
-		root: &OctreeNode{region: *region},
+		root: &Node{region: *region},
 	}
 }
 

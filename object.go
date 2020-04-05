@@ -2,13 +2,13 @@ package octree
 
 import "github.com/The-Tensox/protometry"
 
-// Object stores data and collider about the object
+// Object stores data and bounds
 type Object struct {
 	Data   interface{}
 	Bounds protometry.Box
 }
 
-// NewObject is a Object constructor with collider for ease of use
+// NewObject is a Object constructor with bounds for ease of use
 func NewObject(data interface{}, bounds protometry.Box) *Object {
 	return &Object{Data: data, Bounds: bounds}
 }
