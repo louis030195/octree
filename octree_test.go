@@ -141,6 +141,16 @@ func TestNode_GetColliding(t *testing.T) {
 	//equals(t, 0, colliders[0].Data)
 }
 
+func TestNode_GetCollidingTwo(t *testing.T) {
+	size := 100.
+	o := NewOctree(protometry.NewBoxOfSize(*protometry.NewVector3Zero(), size*2))
+	for i := 0.; i < size; i++ {
+		p := protometry.RandomSpherePoint(*protometry.NewVector3Zero(), size-1)
+		equals(t, true, o.Insert(*NewObjectCube(0, p.Get(0), p.Get(1), p.Get(2), 1)))
+	}
+	equals(t, int(size), o.GetNumberOfObjects())
+	equals(t, int(size), len(o.GetColliding(*protometry.NewBoxOfSize(*protometry.NewVector3Zero(), size*2))))
+}
 
 func TestOctree_Remove(t *testing.T) {
 	o := boilerplateTree(t)

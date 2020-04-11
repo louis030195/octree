@@ -180,8 +180,9 @@ func (n *Node) getColliding(bounds protometry.Box) []Object {
 
 func (n *Node) getAllObjects() []Object {
 	var objects []Object
+	objects = append(objects, n.objects...)
 	if n.children == nil {
-		return n.objects
+		return objects
 	}
 	for _, c := range n.children {
 		objects = append(objects, c.getAllObjects()...)
