@@ -67,6 +67,7 @@ NOW
 - [Github JS sparse-octree](https://github.com/vanruesc/sparse-octree)
 - [Github Distributed adaptive octree construction, 2:1 balancing & partitioning based on space filling curves](https://github.com/paralab/Dendro-5.01)
 - [Github UnityOctree](https://github.com/Nition/UnityOctree)
+- [Book: Real-Time Collision Detection - Christer Ericson](https://www.amazon.com/exec/obidos/tg/detail/-/1558607323?tag=realtimecolli-20)
 - [AN OVERVIEW OF QUADTREES, OCTREES, AND RELATED HIERARCHICAL DATA STRUCTURES](https://www.cs.umd.edu/~hjs/pubs/Samettfcgc88-ocr.pdf)
 - [Efficient Sparse Voxel Octrees](https://research.nvidia.com/publication/efficient-sparse-voxel-octrees)
 - [An Efficient Parametric Algorithm for Octree Traversal](http://wscg.zcu.cz/wscg2000/Papers_2000/X31.pdf)
