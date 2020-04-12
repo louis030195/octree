@@ -39,13 +39,18 @@ func (o *Octree) GetColliding(bounds protometry.Box) []Object {
 	return o.root.getColliding(bounds)
 }
 
-// GetAllObjects return all objects
-func (o *Octree) GetAllObjects() []Object {
+// GetObjects return all objects, the returned array is sorted in the DFS order
+func (o *Octree) GetObjects() []Object {
 	return o.root.getAllObjects()
 }
 
+// GetSize returns the size of the Octree (cubic volume)
+func (o *Octree) GetSize() int {
+	s := o.root.region.GetSize()
+	return int(s.Get(0))
+}
 
-
+// GetNodes flatten all the nodes into an array, the returned array is sorted in the DFS order
 func (o *Octree) GetNodes() []Node {
 	return o.root.getNodes()
 }

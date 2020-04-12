@@ -217,6 +217,13 @@ func TestOctree_Move(t *testing.T) {
 	equals(t, 1, o.getNumberOfObjects())
 }
 
+func TestOctree_GetObjects(t *testing.T) {
+	for i := 0.; i < 100; i++ {
+		o := octreeRandomInsertions(t, i)
+		equals(t, int(i), len(o.GetObjects()))
+	}
+}
+
 func TestOctree_MoveIncorrectDims(t *testing.T) {
 	o := NewOctree(protometry.NewBoxOfSize(*protometry.NewVector3Zero(), 20))
 	myObj := NewObjectCube(0, 0, 0, 0, 2)
@@ -243,6 +250,14 @@ func TestOctree_GetNodes(t *testing.T) {
 	t.Log(o)
 	//equals(t, ?, len(o.GetNodes())) // TODO
 }
+
+func TestOctree_GetSize(t *testing.T) {
+	for i := 0.; i < 100; i++ {
+		o := octreeRandomInsertions(t, i)
+		equals(t, int(i), o.GetSize()/2)
+	}
+}
+
 
 func TestOctree_GetHeight(t *testing.T) {
 	size := 1000.
