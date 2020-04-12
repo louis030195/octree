@@ -90,66 +90,6 @@ func (n *Node) remove(object Object) bool {
 	return removedObject
 }
 
-func (n *Node) move(object *Object, newBounds ...float64) bool {
-	// Incorrect dimensions
-	if (len(newBounds) != 3 && len(newBounds) != 6) || !n.remove(*object) {
-		return false
-	}
-	if len(newBounds) == 3 {
-		object.Bounds = *protometry.NewBoxOfSize(*protometry.NewVectorN(newBounds...), object.Bounds.Extents.Get(0)*2)
-	} else { // Dimensions = 6
-		object.Bounds = *protometry.NewBoxMinMax(newBounds...)
-	}
-	return n.insert(*object)
-}
-
-// Splits the Node into eight children.
-func (n *Node) split() {
-	subBoxes := n.region.Split()
-	n.children = &[8]Node{}
-	for i := range subBoxes {
-		n.children[i] = Node{region: *subBoxes[i]}
-	}
-}
-
-func (n *Node) getHeight() int {
-	if n.children == nil {
-		return 1
-	}
-	max := 0
-	for _, c := range n.children {
-		h := c.getHeight()
-		if h > max {
-			max = h
-		}
-	}
-	return max + 1
-}
-
-func (n *Node) getNumberOfNodes() int {
-	if n.children == nil {
-		return 1
-	}
-	sum := len(n.children)
-	for _, c := range n.children {
-		n := c.getNumberOfNodes()
-		sum += n
-	}
-	return sum
-}
-
-func (n *Node) getNumberOfObjects() int {
-	if n.children == nil {
-		return len(n.objects)
-	}
-	sum := len(n.objects)
-	for _, c := range n.children {
-		n := c.getNumberOfObjects()
-		sum += n
-	}
-	return sum
-}
-
 func (n *Node) getColliding(bounds protometry.Box) []Object {
 	// If current node region entirely fit inside desired Bounds,
 	// No need to search somewhere else => return all objects
@@ -222,6 +162,85 @@ func (n *Node) merge() bool {
 	// Remove the child nodes (and the objects in them - they've been added elsewhere now)
 	n.children = nil
 	return true
+}
+
+func (n *Node) move(object *Object, newBounds ...float64) bool {
+	// Incorrect dimensions
+	if (len(newBounds) != 3 && len(newBounds) != 6) || !n.remove(*object) {
+		return false
+	}
+	if len(newBounds) == 3 {
+		object.Bounds = *protometry.NewBoxOfSize(*protometry.NewVectorN(newBounds...), object.Bounds.Extents.Get(0)*2)
+	} else { // Dimensions = 6
+		object.Bounds = *protometry.NewBoxMinMax(newBounds...)
+	}
+	return n.insert(*object)
+}
+
+// Splits the Node into eight children.
+func (n *Node) split() {
+	subBoxes := n.region.Split()
+	n.children = &[8]Node{}
+	for i := range subBoxes {
+		n.children[i] = Node{region: *subBoxes[i]}
+	}
+}
+
+
+/* * * * * * * * * * * * * * * * * Debugging * * * * * * * * * * * * * * * * */
+func (n *Node) getNodes() []Node {
+	var nodes []Node
+	nodes = append(nodes, *n)
+	if n.children != nil {
+		for _, c := range n.children {
+			nodes = append(nodes, c)
+			nodes = append(nodes, c.getNodes()...)
+		}
+	}
+	return nodes
+}
+
+// GetRegion is used for debugging visualisation outside octree package
+func (n *Node) GetRegion() protometry.Box {
+	return n.region
+}
+
+func (n *Node) getHeight() int {
+	if n.children == nil {
+		return 1
+	}
+	max := 0
+	for _, c := range n.children {
+		h := c.getHeight()
+		if h > max {
+			max = h
+		}
+	}
+	return max + 1
+}
+
+func (n *Node) getNumberOfNodes() int {
+	if n.children == nil {
+		return 1
+	}
+	sum := len(n.children)
+	for _, c := range n.children {
+		n := c.getNumberOfNodes()
+		sum += n
+	}
+	return sum
+}
+
+func (n *Node) getNumberOfObjects() int {
+	if n.children == nil {
+		return len(n.objects)
+	}
+	sum := len(n.objects)
+	for _, c := range n.children {
+		n := c.getNumberOfObjects()
+		sum += n
+	}
+	return sum
 }
 
 func (n *Node) toString(verbose bool) string {

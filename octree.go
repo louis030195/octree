@@ -38,26 +38,30 @@ func (o *Octree) Move(object *Object, newBounds ...float64) bool {
 	return o.root.move(object, newBounds...)
 }
 
-// GetHeight debug function
-func (o *Octree) GetHeight() int {
+func (o *Octree) GetNodes() []Node {
+	return o.root.getNodes()
+}
+
+// getHeight debug function
+func (o *Octree) getHeight() int {
 	return o.root.getHeight()
 }
 
-// GetNumberOfNodes debug function
-func (o *Octree) GetNumberOfNodes() int {
+// getNumberOfNodes debug function
+func (o *Octree) getNumberOfNodes() int {
 	return o.root.getNumberOfNodes()
 }
 
-// GetNumberOfObjects debug function
-func (o *Octree) GetNumberOfObjects() int {
+// getNumberOfObjects debug function
+func (o *Octree) getNumberOfObjects() int {
 	return o.root.getNumberOfObjects()
 }
 
-// GetUsage ...
-func (o *Octree) GetUsage() float64 {
-	return float64(o.GetNumberOfObjects()) / float64(o.GetNumberOfNodes()*CAPACITY)
+// getUsage ...
+func (o *Octree) getUsage() float64 {
+	return float64(o.getNumberOfObjects()) / float64(o.getNumberOfNodes()*CAPACITY)
 }
 
-func (o *Octree) ToString(verbose bool) string {
+func (o *Octree) toString(verbose bool) string {
 	return fmt.Sprintf( "Octree: {\n%v\n}", o.root.toString(verbose))
 }
