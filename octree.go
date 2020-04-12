@@ -22,10 +22,10 @@ func (o *Octree) Insert(object Object) bool {
 	return o.root.insert(object)
 }
 
-// GetColliding returns an array of objects that intersect with the specified bounds, if any.
-// Otherwise returns an empty array.
-func (o *Octree) GetColliding(bounds protometry.Box) []Object {
-	return o.root.getColliding(bounds)
+
+// Move object to a new Bounds, pass a pointer because we want to modify the passed object data
+func (o *Octree) Move(object *Object, newBounds ...float64) bool {
+	return o.root.move(object, newBounds...)
 }
 
 // Remove object
@@ -33,10 +33,18 @@ func (o *Octree) Remove(object Object) bool {
 	return o.root.remove(object)
 }
 
-// Move object to a new Bounds, pass a pointer because we want to modify the passed object data
-func (o *Octree) Move(object *Object, newBounds ...float64) bool {
-	return o.root.move(object, newBounds...)
+// GetColliding returns an array of objects that intersect with the specified bounds, if any.
+// Otherwise returns an empty array.
+func (o *Octree) GetColliding(bounds protometry.Box) []Object {
+	return o.root.getColliding(bounds)
 }
+
+// GetAllObjects return all objects
+func (o *Octree) GetAllObjects() []Object {
+	return o.root.getAllObjects()
+}
+
+
 
 func (o *Octree) GetNodes() []Node {
 	return o.root.getNodes()
