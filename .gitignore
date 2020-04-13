@@ -13,7 +13,11 @@ build
 *.out
 
 # Dependency directories (remove the comment below to include it)
-# vendor/
+vendor/
 
 # Vscode # https://github.com/Microsoft/vscode-go/wiki/Debugging-Go-code-using-VS-Code
-launch.json 
+launch.json
+.vscode
+
+# Idea
+.idea
