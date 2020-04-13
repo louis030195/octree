@@ -26,5 +26,5 @@ func (o *Object) Equal(object Object) bool {
 }
 
 func (o *Object) ToString() string {
-	return fmt.Sprintf("Data:%v\nBounds:{\n%v\n}", o.Data, o.Bounds.ToString())
+	return fmt.Sprintf("Data:%v\nBounds:{\n%v\n}", o.Data, o.Bounds)
 }

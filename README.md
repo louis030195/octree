@@ -4,8 +4,7 @@
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/3aa076e74fce4e80af0e694116444410)](https://app.codacy.com/gh/The-Tensox/octree?utm_source=github.com&utm_medium=referral&utm_content=The-Tensox/octree&utm_campaign=Badge_Grade_Dashboard)
 [![Build Status](https://img.shields.io/circleci/project/The-Tensox/octree/master.svg)](https://circleci.com/gh/The-Tensox/octree)
 
-This is a work in progress, API may change a little bit and current implementations may not match the ideal complexity shown in the papers, some functions have just currently a naive non-optimal implementation.
-
+This is a work in progress, API may change a little bit.
 ## Installation
 
 ```bash
@@ -15,8 +14,8 @@ go get -u github.com/The-Tensox/octree
 ## Usage
 
 ```go
-o := NewOctree(protometry.NewBoxMinMax(1, 1, 1, 4, 4, 4))
-myObj := NewObjectCube(0, 2, 2, 3, 0.5)
+o := octree.NewOctree(protometry.NewBoxMinMax(1, 1, 1, 4, 4, 4))
+myObj := octree.NewObjectCube(0, 2, 2, 3, 0.5)
 ok := o.Insert(*myObj)
 colliders := o.GetColliding(*protometry.NewBoxMinMax(0, 0, 0, 0.9, 2.9, 0.9))
 myObj = o.Move(*myObj, 0, 0, 0, 2, 2, 2) // Using bounds
@@ -46,8 +45,13 @@ go test -benchmem -run XXX -bench . -benchtime 0.2s
 
 ## Roadmap
 
-- [ ] Improve performance, more complexity checks / benchmarks
-- [ ] Tree vizualisation ?
+- [ ] More test coverage
+- [ ] Better benchmarks
+- [ ] Possible optimisations: 
+    - Linear implementation
+    - Looseness
+    - Less copies, unnecessary operations
+    - Parallelization of a few steps
 
 ## References
 
