@@ -52,9 +52,9 @@ func TestObject_Equal(t *testing.T) {
 			fields:fields{
 				id:     4,
 				Data:   nil,
-				Bounds: *protometry.NewBoxOfSize(*protometry.NewVectorN(0, 27.332, 0), 1),
+				Bounds: *protometry.NewBoxOfSize(0, 27.332, 0, 1),
 			},
-			args:args{object: *NewObject(nil, *protometry.NewBoxOfSize(*protometry.NewVectorN(8726.1, 0, 0), 1))},
+			args:args{object: *NewObject(nil, *protometry.NewBoxOfSize(8726.1, 0, 0, 1))},
 			want: true,
 		},
 	}

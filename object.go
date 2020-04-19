@@ -57,7 +57,7 @@ func NewObject(data interface{}, bounds protometry.Box) *Object {
 }
 
 func NewObjectCube(data interface{}, x, y, z, size float64) *Object {
-	return NewObject(data, *protometry.NewBoxOfSize(*protometry.NewVectorN(x, y, z), size))
+	return NewObject(data, *protometry.NewBoxOfSize(x, y, z, size))
 }
 
 // ID returns the unique identifier of the entity.

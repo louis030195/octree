@@ -21,3 +21,6 @@ launch.json
 
 # Idea
 .idea
+
+# Dependencies
+vendor

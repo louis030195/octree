@@ -64,16 +64,17 @@ func (n *Node) remove(object Object) bool {
 		return false
 	}
 
-	for i := 0; i < len(n.objects); i++ {
+	for i, o := range n.objects {
 		// Found it ? delete it and return true
-		if n.objects[i].Equal(object) {
+		if o.Equal(object) {
 			// https://stackoverflow.com/questions/37334119/how-to-delete-an-element-from-a-slice-in-golang
 			n.objects = append(n.objects[:i], n.objects[i+1:]...)
-			return true
+			removedObject = true
 		}
 	}
 
-	if n.children != nil {
+	// If we couldn't remove in current node objects, let's try in children
+	if !removedObject && n.children != nil {
 		for i := range n.children {
 			if n.children[i].remove(object) {
 				removedObject = true
@@ -136,14 +137,14 @@ func (n *Node) getObjects() []Object {
 
 // range is already taken
 func (n *Node) rang(f func(*Object) bool) {
-	for i := range n.objects {
-		if !f(&n.objects[i]) {
+	for _, o := range n.objects {
+		if !f(&o) {
 			return
 		}
 	}
 	if n.children != nil {
-		for i := range n.children {
-			n.children[i].rang(f)
+		for _, c := range n.children {
+			c.rang(f)
 		}
 	}
 }
@@ -168,18 +169,20 @@ func (n *Node) merge() bool {
 		return false
 	}
 
-	// Note: We know children != null or we wouldn't be merging
-	for i := range n.children {
-		curChild := n.children[i]
-		numObjects := len(curChild.objects)
-		for j := numObjects - 1; j >= 0; j-- {
-			curObj := curChild.objects[j]
-			n.objects = append(n.objects, curObj)
+	if n.children != nil {
+		for i := range n.children {
+			curChild := n.children[i]
+			numObjects := len(curChild.objects)
+			for j := numObjects - 1; j >= 0; j-- {
+				curObj := curChild.objects[j]
+				n.objects = append(n.objects, curObj)
+			}
 		}
+		// Remove the child nodes (and the objects in them - they've been added elsewhere now)
+		n.children = nil
+		return true
 	}
-	// Remove the child nodes (and the objects in them - they've been added elsewhere now)
-	n.children = nil
-	return true
+	return false
 }
 
 func (n *Node) move(object *Object, newBounds ...float64) bool {
@@ -188,9 +191,22 @@ func (n *Node) move(object *Object, newBounds ...float64) bool {
 		return false
 	}
 	if len(newBounds) == 3 {
-		object.Bounds = *protometry.NewBoxOfSize(*protometry.NewVectorN(newBounds...), object.Bounds.Extents.Get(0)*2)
+		size := object.Bounds.GetSize().Times(0.5)
+		object.Bounds.Min.X = newBounds[0] - size.X
+		object.Bounds.Min.Y = newBounds[1] - size.Y
+		object.Bounds.Min.Z = newBounds[2] - size.Z
+
+		object.Bounds.Max.X = newBounds[0] + size.X
+		object.Bounds.Max.Y = newBounds[1] + size.Y
+		object.Bounds.Max.Z = newBounds[2] + size.Z
 	} else { // Dimensions = 6
-		object.Bounds = *protometry.NewBoxMinMax(newBounds...)
+		object.Bounds.Min.X = newBounds[0]
+		object.Bounds.Min.Y = newBounds[1]
+		object.Bounds.Min.Z = newBounds[2]
+
+		object.Bounds.Max.X = newBounds[3]
+		object.Bounds.Max.Y = newBounds[4]
+		object.Bounds.Max.Z = newBounds[5]
 	}
 	return n.insert(*object)
 }
@@ -242,8 +258,8 @@ func (n *Node) getNumberOfNodes() int {
 	}
 	sum := len(n.children)
 	for _, c := range n.children {
-		n := c.getNumberOfNodes()
-		sum += n
+		nb := c.getNumberOfNodes()
+		sum += nb
 	}
 	return sum
 }

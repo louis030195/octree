@@ -59,7 +59,7 @@ func (o *Octree) Range(f func(*Object) bool) {
 // GetSize returns the size of the Octree (cubic volume)
 func (o *Octree) GetSize() int {
 	s := o.root.region.GetSize()
-	return int(s.Get(0))
+	return int(s.X)
 }
 
 // GetNodes flatten all the nodes into an array, the returned array is sorted in the DFS order
