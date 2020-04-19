@@ -138,7 +138,7 @@ func (n *Node) getObjects() []Object {
 func (n *Node) rang(f func(*Object) bool) {
 	for i := range n.objects {
 		if !f(&n.objects[i]) {
-			break
+			return
 		}
 	}
 	if n.children != nil {
@@ -265,7 +265,7 @@ func (n *Node) toString(verbose bool) string {
 	s = ",\nobjects: [\n"
 	if verbose {
 		for _, o := range n.objects {
-			s += fmt.Sprintf("%v,\n", o.ToString())
+			s += fmt.Sprintf("%v,\n", o.String())
 		}
 	} else {
 		s += fmt.Sprintf("%v objects,\n", len(n.objects))

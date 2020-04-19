@@ -23,7 +23,7 @@ func equals(tb testing.TB, exp, act interface{}) {
 
 /*
  Returns true if all nodes have less objects than CAPACITY
- */
+*/
 func ensureBalanced(tb testing.TB, n Node) bool {
 	if len(n.objects) > CAPACITY {
 		tb.Logf("Number of objects in node: %v", len(n.objects))
@@ -102,9 +102,6 @@ func TestNode_InsertRandomPosition(t *testing.T) {
 	}
 	checkOctree(t, *o, int(size))
 }
-
-
-
 
 func TestNode_GetColliding(t *testing.T) {
 	o := NewOctree(protometry.NewBoxMinMax(1, 1, 1, 4, 4, 4))
@@ -227,14 +224,14 @@ func TestOctree_GetAllObjects(t *testing.T) {
 func TestOctree_Range(t *testing.T) {
 	o := NewOctree(protometry.NewBoxOfSize(*protometry.NewVectorN(0, 0, 0), 100))
 
-	objs := []*Object{
-		NewObjectCube(0, 12, 12, 12, 1),
-		NewObjectCube(0, 15, 12, 12, 1),
-		NewObjectCube(0, 12, 27, 12, 1),
+	objs := []Object{
+		*NewObjectCube(0, 12, 12, 12, 1),
+		*NewObjectCube(0, 15, 12, 12, 1),
+		*NewObjectCube(0, 12, 27, 12, 1),
 	}
 
 	for i := range objs {
-		equals(t, true, o.Insert(*objs[i]))
+		equals(t, true, o.Insert(objs[i]))
 	}
 
 	// Asserting that the first element is objs[0]
@@ -258,6 +255,44 @@ func TestOctree_Range(t *testing.T) {
 	})
 	// Assert that returning false properly stop the iteration
 	equals(t, 1, i)
+
+	// Asserting that we can iterate all objects' tree even after been split into children
+	objs = []Object{}
+	o = NewOctree(protometry.NewBoxOfSize(*protometry.NewVectorN(0, 0, 0), 200))
+	for i := 0; i < 100; i++ {
+		p := protometry.RandomSpherePoint(*protometry.NewVector3Zero(), 99)
+		obj := NewObjectCube(i, p.Get(0), p.Get(1), p.Get(2), 1)
+		equals(t, true, o.Insert(*obj))
+		objs = append(objs, *obj)
+	}
+	i = 0
+	// Just a quick helper to find element in slice
+	findInSlice := func(slice []Object, e Object) int {
+		i := -1
+		for index, sliceElement := range slice {
+			if sliceElement.Equal(e) {
+				i = index
+				break
+			}
+		}
+		return i
+	}
+	o.Range(func(object *Object) bool {
+		index := findInSlice(objs, *object)
+		if index >= 0 {
+			// Remove
+			objs = append(objs[:index], objs[index+1:]...)
+		}
+		// This could be tempting to test this case:
+		// equals(t, true, objs[i].Equal(*object))
+		// But in fact, the order is obviously not the same as during insertion, it's an Octree not an array !!!
+		i++
+		return true
+	})
+	// We want to check if we properly iterated through all objects
+	equals(t, i, 100)
+	// We want to check if we iterated through DISTINCT objects, no duplicate !
+	equals(t, 0, len(objs))
 }
 
 func TestOctree_MoveIncorrectDims(t *testing.T) {
@@ -293,7 +328,6 @@ func TestOctree_GetSize(t *testing.T) {
 		equals(t, int(i), o.GetSize()/2)
 	}
 }
-
 
 func TestOctree_GetHeight(t *testing.T) {
 	size := 1000.
@@ -332,7 +366,6 @@ func TestOctree_GetUsage(t *testing.T) {
 	equals(t, float64(o.getNumberOfObjects())/float64(o.getNumberOfNodes()*CAPACITY), o.getUsage())
 }
 
-
 func TestOctree_ToString(t *testing.T) {
 	size := 20.
 	o := NewOctree(protometry.NewBoxOfSize(*protometry.NewVector3Zero(), size*2))
@@ -355,7 +388,6 @@ func BenchmarkNode_InsertRandomPosition(b *testing.B) {
 	b.StopTimer()
 }
 
-
 func BenchmarkNode_GetCollidingFullRandom(b *testing.B) {
 	size := float64(b.N)
 	o := NewOctree(protometry.NewBoxOfSize(*protometry.NewVector3Zero(), size*2))
@@ -367,7 +399,7 @@ func BenchmarkNode_GetCollidingFullRandom(b *testing.B) {
 	b.StartTimer()
 	for i := 1.; i < size; i++ {
 		p := protometry.RandomSpherePoint(*protometry.NewVector3Zero(), size-1)
-		o.GetColliding(*protometry.NewBoxOfSize(p, rand.ExpFloat64() / size))
+		o.GetColliding(*protometry.NewBoxOfSize(p, rand.ExpFloat64()/size))
 	}
 	b.StopTimer()
 }
@@ -417,4 +449,3 @@ func BenchmarkOctree_Range(b *testing.B) {
 	})
 	b.StopTimer()
 }
-

@@ -70,6 +70,6 @@ func (o *Object) Equal(object Object) bool {
 
 }
 
-func (o *Object) ToString() string {
+func (o *Object) String() string {
 	return fmt.Sprintf("Data:%v\nBounds:{\n%v\n}", o.Data, o.Bounds)
 }
