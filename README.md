@@ -42,6 +42,8 @@ go test -benchmem -run XXX -bench . -benchtime 0.2s
 |BenchmarkNode_GetCollidingFullRandom-8   |   10000   |   117948 ns/op   |   38970 B/op   |   1282 allocs/op   |
 |BenchmarkNode_RemoveRandomPosition-8   |   20388   |   56150 ns/op   |   20572 B/op   |   635 allocs/op   |
 |BenchmarkNode_MoveRandomPosition-8   |   10000   |   104333 ns/op   |   35653 B/op   |   1131 allocs/op   |
+|BenchmarkOctree_Range-8   |   10000   |   33591 ns/op   |   9871 B/op   |   311 allocs/op   |
+
 
 ## Roadmap
 

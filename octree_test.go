@@ -271,7 +271,7 @@ func TestOctree_MoveIncorrectDims(t *testing.T) {
 	equals(t, 1, o.getNumberOfObjects())
 }
 
-func octreeRandomInsertions(t *testing.T, treeSize float64) *Octree {
+func octreeRandomInsertions(t testing.TB, treeSize float64) *Octree {
 	o := NewOctree(protometry.NewBoxOfSize(*protometry.NewVector3Zero(), treeSize*2))
 	for i := 0.; i < treeSize; i++ {
 		p := protometry.RandomSpherePoint(*protometry.NewVector3Zero(), treeSize-1)
@@ -405,6 +405,16 @@ func BenchmarkNode_MoveRandomPosition(b *testing.B) {
 		p := protometry.RandomSpherePoint(*protometry.NewVector3Zero(), size-1)
 		equals(b, true, o.Move(&ob, p.Dimensions...))
 	}
+	b.StopTimer()
+}
+
+func BenchmarkOctree_Range(b *testing.B) {
+	size := float64(b.N)
+	o := octreeRandomInsertions(b, size)
+	b.StartTimer()
+	o.Range(func(object *Object) bool {
+		return true
+	})
 	b.StopTimer()
 }
 
