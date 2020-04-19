@@ -65,7 +65,7 @@ func (n *Node) remove(object Object) bool {
 	}
 
 	for i := 0; i < len(n.objects); i++ {
-		// Found it ? delete it and return a copy
+		// Found it ? delete it and return true
 		if n.objects[i].Equal(object) {
 			// https://stackoverflow.com/questions/37334119/how-to-delete-an-element-from-a-slice-in-golang
 			n.objects = append(n.objects[:i], n.objects[i+1:]...)
