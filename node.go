@@ -130,6 +130,24 @@ func (n *Node) getAllObjects() []Object {
 	return objects
 }
 
+func (n *Node) getObjects() []Object {
+	return n.objects
+}
+
+// range is already taken
+func (n *Node) rang(f func(*Object) bool) {
+	for i := range n.objects {
+		if !f(&n.objects[i]) {
+			break
+		}
+	}
+	if n.children != nil {
+		for i := range n.children {
+			n.children[i].rang(f)
+		}
+	}
+}
+
 /* Merge all children into this node - the opposite of Split.
  * Note: We only have to check one level down since a merge will never happen if the children already have children,
  * since THAT won't happen unless there are already too many objects to merge.
@@ -185,7 +203,6 @@ func (n *Node) split() {
 		n.children[i] = Node{region: *subBoxes[i]}
 	}
 }
-
 
 /* * * * * * * * * * * * * * * * * Debugging * * * * * * * * * * * * * * * * */
 func (n *Node) getNodes() []Node {
@@ -257,7 +274,7 @@ func (n *Node) toString(verbose bool) string {
 	if verbose {
 		if n.children != nil {
 			for _, c := range n.children {
-				s += fmt.Sprintf( "%v,\n", c.toString(verbose))
+				s += fmt.Sprintf("%v,\n", c.toString(verbose))
 			}
 		}
 	} else {

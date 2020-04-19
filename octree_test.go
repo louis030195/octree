@@ -217,11 +217,47 @@ func TestOctree_Move(t *testing.T) {
 	equals(t, 1, o.getNumberOfObjects())
 }
 
-func TestOctree_GetObjects(t *testing.T) {
+func TestOctree_GetAllObjects(t *testing.T) {
 	for i := 0.; i < 100; i++ {
 		o := octreeRandomInsertions(t, i)
-		equals(t, int(i), len(o.GetObjects()))
+		equals(t, int(i), len(o.GetAllObjects()))
 	}
+}
+
+func TestOctree_Range(t *testing.T) {
+	o := NewOctree(protometry.NewBoxOfSize(*protometry.NewVectorN(0, 0, 0), 100))
+
+	objs := []*Object{
+		NewObjectCube(0, 12, 12, 12, 1),
+		NewObjectCube(0, 15, 12, 12, 1),
+		NewObjectCube(0, 12, 27, 12, 1),
+	}
+
+	for i := range objs {
+		equals(t, true, o.Insert(*objs[i]))
+	}
+
+	// Asserting that the first element is objs[0]
+	o.Range(func(object *Object) bool {
+		equals(t, true, objs[0].Equal(*object))
+		return false
+	})
+	i := 0
+	o.Range(func(object *Object) bool {
+		equals(t, true, objs[i].Equal(*object))
+		i++
+		return true
+	})
+
+	i = 0
+	// Asserting that we properly range over objs
+	o.Range(func(object *Object) bool {
+		equals(t, true, objs[0].Equal(*object))
+		i++
+		return false
+	})
+	// Assert that returning false properly stop the iteration
+	equals(t, 1, i)
 }
 
 func TestOctree_MoveIncorrectDims(t *testing.T) {
