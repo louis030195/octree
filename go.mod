@@ -7,4 +7,4 @@ require (
 	github.com/golang/protobuf v1.4.0 // indirect
 )
 
-replace github.com/The-Tensox/protometry => ../protometry
+#replace github.com/The-Tensox/protometry => ../protometry

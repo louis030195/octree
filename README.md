@@ -32,10 +32,12 @@ go test
 
 ```bash
 # XXX will skip tests
-go test -benchmem -run XXX -bench . -benchtime 10000x
+go test -benchmem -run XXX -bench . -benchtime 10000x # or -benchtime 0.02s
 ```
 
+![](docs/bench.png)
 
+<!--
 |Name   |   Runs   |   time   |   Bytes   |   Allocs   |
 |:-----:|:--------:|:--------:|:---------:|:----------:|
 |BenchmarkNode_InsertRandomPosition-8   |   10000   |   1691 ns/op   |   616 B/op  |   3 allocs/op   |
@@ -43,7 +45,7 @@ go test -benchmem -run XXX -bench . -benchtime 10000x
 |BenchmarkNode_RemoveRandomPosition-8   |   10000   |   58865 ns/op   |   1025 B/op   |   3 allocs/op   |
 |BenchmarkNode_MoveRandomPosition-8   |   10000   |   112245 ns/op   |   1025 B/op   |   3 allocs/op   |
 |BenchmarkOctree_Range-8   |   10000   |   912 ns/op   |   617 B/op   |   3 allocs/op   |
-
+-->
 
 ## Roadmap
 
