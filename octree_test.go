@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"reflect"
 	"runtime"
+	"sync/atomic"
 	"testing"
 
 	"github.com/The-Tensox/protometry"
@@ -183,6 +184,28 @@ func TestOctree_Remove(t *testing.T) {
 	equals(t, 7, o.getNumberOfObjects())
 }
 
+func TestOctree_RemoveInChildrenAndMerge(t *testing.T) {
+	size := 100.
+	o := NewOctree(protometry.NewBoxOfSize(0, 0, 0, size*2))
+	var nilChildren *[8]Node
+	// No children
+	equals(t, true, nilChildren == o.root.children)
+
+	var objects []Object
+	for i := 0.; i < 6; i++ {
+		myObj := NewObjectCube(0, 0, 0, 0, 2)
+		objects = append(objects, *myObj)
+		equals(t, true, o.Insert(*myObj))
+	}
+	// Has split-ed ?
+	equals(t, true, nilChildren != o.root.children)
+	equals(t, 6, o.getNumberOfObjects())
+	// Trigger a merge
+	equals(t, true, o.Remove(objects[len(objects)-1]))
+	equals(t, 5, o.getNumberOfObjects())
+	equals(t, 1, o.getNumberOfNodes())
+}
+
 func TestOctree_Move(t *testing.T) {
 	o := NewOctree(protometry.NewBoxOfSize(0, 0, 0, 20))
 	myObj := NewObjectCube(0, 0, 0, 0, 2)
@@ -248,6 +271,7 @@ func TestOctree_GetAllObjects(t *testing.T) {
 	}
 }
 
+
 func TestOctree_Range(t *testing.T) {
 	o := NewOctree(protometry.NewBoxOfSize(0, 0, 0, 100))
 
@@ -269,7 +293,7 @@ func TestOctree_Range(t *testing.T) {
 	i := 0
 	o.Range(func(object *Object) bool {
 		equals(t, true, objs[i].Equal(*object))
-		equals(t, uint64(i+1), object.ID())
+		//equals(t, uint64(i+1), object.ID()) // other tests will increment the atomic
 		i++
 		return true
 	})
@@ -335,10 +359,36 @@ func octreeRandomInsertions(t testing.TB, treeSize float64) *Octree {
 }
 
 func TestOctree_GetNodes(t *testing.T) {
-	ts := 1000.
+	ts := 6.
 	o := octreeRandomInsertions(t, ts)
 	t.Log(o)
-	//equals(t, ?, len(o.GetNodes())) // TODO
+	equals(t, 9, len(o.GetNodes())) // TODO higher scale
+}
+
+func TestOctree_Get(t *testing.T) {
+	// Reset id counter atomic
+	atomic.StoreUint64(&idInc, 0)
+	treeSize := 1000.
+	o := NewOctree(protometry.NewBoxOfSize(0, 0, 0, treeSize*2))
+	var objects []Object
+	for i := 0.; i < treeSize; i++ {
+		p := protometry.RandomSpherePoint(*protometry.NewVector3Zero(), treeSize-1)
+		myObj := NewObjectCube(0, p.X, p.Y, p.Z, 1)
+		objects = append(objects, *myObj)
+		equals(t, true, o.Insert(*myObj))
+	}
+	// Creating a box slightly bigger where this object can fit
+	bFiveHundred := objects[500].Bounds.GetCenter()
+	bFiveHundredSize := objects[500].Bounds.GetSize().Sum()
+	b := protometry.NewBoxOfSize(bFiveHundred.X, bFiveHundred.Y, bFiveHundred.Z, (bFiveHundredSize/3)*4)
+	// Ensure that it fit
+	equals(t, true, objects[500].Bounds.Fit(*b))
+	// ID start at 1, check that it's found
+	findObj := o.Get(501, *b)
+	equals(t, true, findObj != nil)
+	equals(t, uint64(501), findObj.ID())
+	// Just a double-check shouldn't be required
+	equals(t, true, findObj.Bounds.Fit(*b))
 }
 
 func TestOctree_GetSize(t *testing.T) {

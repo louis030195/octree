@@ -43,7 +43,6 @@ func (n *Node) insert(object Object) bool {
 		for i := range objects {
 			n.insert(objects[i])
 		}
-
 	}
 
 	// Children isn't nil => try to add in children otherwise add in objects
@@ -57,8 +56,6 @@ func (n *Node) insert(object Object) bool {
 }
 
 func (n *Node) remove(object Object) bool {
-	removedObject := false
-
 	// Object outside Bounds
 	if !object.Bounds.Fit(n.region) {
 		return false
@@ -69,26 +66,21 @@ func (n *Node) remove(object Object) bool {
 		if o.Equal(object) {
 			// https://stackoverflow.com/questions/37334119/how-to-delete-an-element-from-a-slice-in-golang
 			n.objects = append(n.objects[:i], n.objects[i+1:]...)
-			removedObject = true
+			n.merge()
+			return true
 		}
 	}
 
 	// If we couldn't remove in current node objects, let's try in children
-	if !removedObject && n.children != nil {
+	if n.children != nil {
 		for i := range n.children {
 			if n.children[i].remove(object) {
-				removedObject = true
-				break
+				n.merge()
+				return true
 			}
 		}
 	}
-
-	// Successfully removed in children
-	if removedObject {
-		// Try to merge nodes now that we've removed an item
-		n.merge()
-	}
-	return removedObject
+	return false
 }
 
 func (n *Node) getColliding(bounds protometry.Box) []Object {
@@ -226,7 +218,6 @@ func (n *Node) getNodes() []Node {
 	nodes = append(nodes, *n)
 	if n.children != nil {
 		for _, c := range n.children {
-			nodes = append(nodes, c)
 			nodes = append(nodes, c.getNodes()...)
 		}
 	}

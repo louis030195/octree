@@ -8,6 +8,10 @@ github.com/The-Tensox/protometry v0.0.0-20200402182624-0a8c69d9271d h1:JhweHigmk
 github.com/The-Tensox/protometry v0.0.0-20200402182624-0a8c69d9271d/go.mod h1:VbYEXDN4pIGMe2wZ5dxVMXXdZl8bY7avbECj8JKxoJM=
 github.com/The-Tensox/protometry v0.0.0-20200413165427-aac091aed322 h1:/lfwXCXnRVj4Pcs58RDetl06buryhrDu8Ix/iVhzZ7Q=
 github.com/The-Tensox/protometry v0.0.0-20200413165427-aac091aed322/go.mod h1:VbYEXDN4pIGMe2wZ5dxVMXXdZl8bY7avbECj8JKxoJM=
+github.com/The-Tensox/protometry v0.0.0-20200419075346-8e20502d3fa8 h1:uZLbwvp+y04CDgGB65m7jd7Ttp3TVLfnBJms83D4yTI=
+github.com/The-Tensox/protometry v0.0.0-20200419075346-8e20502d3fa8/go.mod h1:VbYEXDN4pIGMe2wZ5dxVMXXdZl8bY7avbECj8JKxoJM=
+github.com/The-Tensox/protometry v0.0.0-20200425072357-ba72202082f9 h1:VeKhbCdonj8HFTYctqubdeqvZClcLnkPxkAADU7UtrQ=
+github.com/The-Tensox/protometry v0.0.0-20200425072357-ba72202082f9/go.mod h1:1CbDN23RfqPGXfvAoGimvjq3z4lP4BYsSIY0pVfnVQE=
 github.com/ajstarks/svgo v0.0.0-20180226025133-644b8db467af/go.mod h1:K08gAheRH3/J6wwsYMMT4xOr94bZjxIelGM0+d/wbFw=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/fogleman/gg v1.2.1-0.20190220221249-0403632d5b90/go.mod h1:R/bRT+9gY/C5z7JzPU0zXsXHKM4/ayA+zqcVNZzPa1k=

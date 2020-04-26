@@ -44,16 +44,22 @@ func (o *Octree) GetAllObjects() []Object {
 	return o.root.getAllObjects()
 }
 
-//// GetObjects return all objects, the returned array is sorted in the DFS order
-//func (o *Octree) GetObjects() []Object {
-//	return o.root.getObjects()
-//}
-
-// Based on https://golang.org/src/sync/map.go?s=9749:9805#L296
+// Range based on https://golang.org/src/sync/map.go?s=9749:9805#L296
 // Range calls f sequentially for each object present in the octree.
 // If f returns false, range stops the iteration.
 func (o *Octree) Range(f func(*Object) bool) {
 	o.root.rang(f)
+}
+
+// Get will try to find a specific object based on an id
+func (o *Octree) Get(id uint64, box protometry.Box) *Object {
+	objs := o.GetColliding(box)
+	for _, obj := range objs {
+		if id == obj.ID() {
+			return &obj
+		}
+	}
+	return nil
 }
 
 // GetSize returns the size of the Octree (cubic volume)

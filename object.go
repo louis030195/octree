@@ -21,7 +21,7 @@ type Identifier interface {
 // store objects in slices, and use the P=n*log n lookup for them
 type IdentifierSlice []Identifier
 
-func NewId() uint64 {
+func newID() uint64 {
 	return atomic.AddUint64(&idInc, 1)
 }
 
@@ -53,9 +53,10 @@ type Object struct {
 
 // NewObject is a Object constructor with bounds for ease of use
 func NewObject(data interface{}, bounds protometry.Box) *Object {
-	return &Object{id: atomic.AddUint64(&idInc, 1), Data: data, Bounds: bounds}
+	return &Object{id: newID(), Data: data, Bounds: bounds}
 }
 
+// NewObjectCube returns a new cubic object of given size
 func NewObjectCube(data interface{}, x, y, z, size float64) *Object {
 	return NewObject(data, *protometry.NewBoxOfSize(x, y, z, size))
 }
@@ -65,9 +66,9 @@ func (o *Object) ID() uint64 {
 	return o.id
 }
 
+// Equal checks object equality over an atomic ID property
 func (o *Object) Equal(object Object) bool {
 	return o.id == object.id
-
 }
 
 func (o *Object) String() string {
