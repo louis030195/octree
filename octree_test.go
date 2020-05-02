@@ -74,6 +74,12 @@ func TestNode_InsertRandomPosition(t *testing.T) {
 	checkOctree(t, *o, int(size))
 }
 
+func TestNode_InsertOutsideBounds(t *testing.T) {
+	size := math.Pow(10, 4)
+	o := NewOctree(protometry.NewBoxOfSize(0, 0, 0, size*2))
+	equals(t, false, o.Insert(*NewObjectCube(0, size, 0, 0, 1)))
+}
+
 func TestNode_GetColliding(t *testing.T) {
 	o := NewOctree(protometry.NewBoxMinMax(1, 1, 1, 4, 4, 4))
 	equals(t, true, o.Insert(*NewObjectCube(0, 2, 2, 3, 1)))
@@ -204,6 +210,22 @@ func TestOctree_RemoveInChildrenAndMerge(t *testing.T) {
 	equals(t, true, o.Remove(objects[len(objects)-1]))
 	equals(t, 5, o.getNumberOfObjects())
 	equals(t, 1, o.getNumberOfNodes())
+}
+
+func TestOctree_RemoveObjectIntersectingMultipleNodes(t *testing.T) {
+	size := 100.
+	o := NewOctree(protometry.NewBoxOfSize(0, 0, 0, size*2))
+	var nilChildren *[8]Node
+	// No children
+	equals(t, true, nilChildren == o.root.children)
+	for i := 0.; i < 6; i++ {
+		myObj := NewObjectCube(0, 0, 0, 0, 2)
+		equals(t, true, o.Insert(*myObj))
+	}
+	obj := NewObjectCube(0, 0, 0, 0, 51)
+	equals(t, true, o.Insert(*obj))
+	equals(t, 7, o.getNumberOfObjects())
+	equals(t, true, o.Remove(*obj))
 }
 
 func TestOctree_Move(t *testing.T) {
@@ -445,7 +467,8 @@ func TestOctree_ToString(t *testing.T) {
 }
 
 /* * * BENCHES * * */
-func BenchmarkNode_InsertRandomPosition(b *testing.B) {
+func bNode_InsertRandomPosition(b *testing.B, capacity int) {
+	CAPACITY = capacity
 	size := float64(b.N)
 	rand.Seed(int64(b.N))
 	o := NewOctree(protometry.NewBoxOfSize(0, 0, 0, size*2))
@@ -455,6 +478,19 @@ func BenchmarkNode_InsertRandomPosition(b *testing.B) {
 		equals(b, true, o.Insert(*NewObjectCube(0, p.X, p.Y, p.Z,
 			1)))
 	}
+}
+
+func BenchmarkNode_InsertRandomPositionCapacity5(b *testing.B) {
+	bNode_InsertRandomPosition(b, 5)
+}
+func BenchmarkNode_InsertRandomPositionCapacity10(b *testing.B) {
+	bNode_InsertRandomPosition(b, 10)
+}
+func BenchmarkNode_InsertRandomPositionCapacity20(b *testing.B) {
+	bNode_InsertRandomPosition(b, 20)
+}
+func BenchmarkNode_InsertRandomPositionCapacity50(b *testing.B) {
+	bNode_InsertRandomPosition(b, 50)
 }
 
 func BenchmarkNode_GetCollidingFullRandom(b *testing.B) {

@@ -46,9 +46,11 @@ func (n *Node) insert(object Object) bool {
 	}
 
 	// Children isn't nil => try to add in children otherwise add in objects
-	for i := range n.children {
-		if n.children[i].insert(object) {
-			return true
+	if n.children != nil {
+		for i := range n.children {
+			if n.children[i].insert(object) {
+				return true
+			}
 		}
 	}
 	n.objects = append(n.objects, object)
@@ -57,7 +59,7 @@ func (n *Node) insert(object Object) bool {
 
 func (n *Node) remove(object Object) bool {
 	// Object outside Bounds
-	if !object.Bounds.Fit(n.region) {
+	if !object.Bounds.Intersects(n.region) {
 		return false
 	}
 
