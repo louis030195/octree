@@ -1,14 +1,14 @@
 
 # octree
 
-[![Codacy Badge](https://api.codacy.com/project/badge/Grade/3aa076e74fce4e80af0e694116444410)](https://app.codacy.com/gh/The-Tensox/octree?utm_source=github.com&utm_medium=referral&utm_content=The-Tensox/octree&utm_campaign=Badge_Grade_Dashboard)
-[![Build Status](https://img.shields.io/circleci/project/The-Tensox/octree/master.svg)](https://circleci.com/gh/The-Tensox/octree)
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/3aa076e74fce4e80af0e694116444410)](https://app.codacy.com/gh/louis030195/octree?utm_source=github.com&utm_medium=referral&utm_content=louis030195/octree&utm_campaign=Badge_Grade_Dashboard)
 
-This is a work in progress, API may change a little bit.
+![octree](docs/octree.png)
+
 ## Installation
 
 ```bash
-go get -u github.com/The-Tensox/octree
+go get -u github.com/louis030195/octree
 ```
 
 ## Usage
@@ -22,12 +22,6 @@ myObj = o.Move(*myObj, 0, 0, 0, 2, 2, 2) // Using bounds
 myObj = o.Move(*myObj, 3, 3, 3) // Using position, assume cube of side 1
 ```
 
-## Test
-
-```bash
-go test
-```
-
 ## Benchmark
 
 ```bash
@@ -35,8 +29,8 @@ go test
 go test -benchmem -run XXX -bench . -benchtime 500000x # or -benchtime 0.02s
 ```
 
-![](docs/bench1.png)
-![](docs/bench2.png)
+![b1](docs/bench1.png)
+![b2](docs/bench2.png)
 
 
 ## Roadmap

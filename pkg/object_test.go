@@ -1,8 +1,9 @@
 package octree
 
 import (
-	"github.com/The-Tensox/protometry"
-	"testing"
+    protometry "github.com/louis030195/protometry/pkg"
+
+    "testing"
 )
 
 func TestObject_Equal(t *testing.T) {

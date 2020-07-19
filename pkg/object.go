@@ -2,8 +2,9 @@ package octree
 
 import (
 	"fmt"
-	"github.com/The-Tensox/protometry"
-	"sync/atomic"
+    protometry "github.com/louis030195/protometry/pkg"
+
+    "sync/atomic"
 )
 
 var (

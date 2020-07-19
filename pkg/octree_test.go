@@ -10,7 +10,8 @@ import (
 	"sync/atomic"
 	"testing"
 
-	"github.com/The-Tensox/protometry"
+    protometry "github.com/louis030195/protometry/pkg"
+
 )
 
 // equals fails the test if exp is not equal to act.

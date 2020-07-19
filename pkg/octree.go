@@ -2,7 +2,8 @@ package octree
 
 import (
 	"fmt"
-	"github.com/The-Tensox/protometry"
+    protometry "github.com/louis030195/protometry/pkg"
+
 )
 
 // Octree ...

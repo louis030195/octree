@@ -1,10 +1,8 @@
-module github.com/The-Tensox/octree
+module github.com/louis030195/octree
 
-go 1.13
+go 1.14
 
 require (
-	github.com/The-Tensox/protometry v0.0.0-20200426150542-c1a2b4b9913e
-	github.com/golang/protobuf v1.4.0 // indirect
+	github.com/golang/protobuf v1.3.5 // indirect
+	github.com/louis030195/protometry v0.0.0-20200719140430-a9373ebf9d14
 )
-
-//replace github.com/The-Tensox/protometry => ../protometry
