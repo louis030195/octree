@@ -1,7 +1,7 @@
 package octree
 
 import (
-    protometry "github.com/louis030195/protometry/pkg"
+    "github.com/louis030195/protometry/api/volume"
 
     "testing"
 )
@@ -9,7 +9,7 @@ import (
 func TestNode_merge(t *testing.T) {
 	n := Node{
 		objects:  nil,
-		region:   protometry.Box{},
+		region:   volume.Box{},
 		children: &[8]Node{},
 	}
 	equals(t, true, n.merge())

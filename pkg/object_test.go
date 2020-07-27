@@ -1,8 +1,7 @@
 package octree
 
 import (
-    protometry "github.com/louis030195/protometry/pkg"
-
+    "github.com/louis030195/protometry/api/volume"
     "testing"
 )
 
@@ -10,7 +9,7 @@ func TestObject_Equal(t *testing.T) {
 	type fields struct {
 		id     uint64
 		Data   interface{}
-		Bounds protometry.Box
+		Bounds volume.Box
 	}
 	type args struct {
 		object Object
@@ -23,39 +22,39 @@ func TestObject_Equal(t *testing.T) {
 	}{
 		// TODO: Add test cases.
 		{
-			fields:fields{
+			fields: fields{
 				id:     1, // Because NewObject increments the id automatically
 				Data:   nil,
-				Bounds: protometry.Box{},
+				Bounds: volume.Box{},
 			},
-			args:args{object: *NewObject(nil, protometry.Box{})},
+			args: args{object: *NewObject(nil, volume.Box{})},
 			want: true,
 		},
 		{
-			fields:fields{
+			fields: fields{
 				id:     2, // Because NewObject increments the id automatically
 				Data:   2728624,
-				Bounds: protometry.Box{},
+				Bounds: volume.Box{},
 			},
-			args:args{object: *NewObject(nil, protometry.Box{})},
+			args: args{object: *NewObject(nil, volume.Box{})},
 			want: true,
 		},
 		{ // Equality is only checked on id, not data or bounds
-			fields:fields{
+			fields: fields{
 				id:     2424224,
 				Data:   1,
-				Bounds: protometry.Box{},
+				Bounds: volume.Box{},
 			},
-			args:args{object: *NewObject(1, protometry.Box{})},
+			args: args{object: *NewObject(1, volume.Box{})},
 			want: false,
 		},
 		{ // Equality is only checked on id, not data or bounds
-			fields:fields{
+			fields: fields{
 				id:     4,
 				Data:   nil,
-				Bounds: *protometry.NewBoxOfSize(0, 27.332, 0, 1),
+				Bounds: *volume.NewBoxOfSize(0, 27.332, 0, 1),
 			},
-			args:args{object: *NewObject(nil, *protometry.NewBoxOfSize(8726.1, 0, 0, 1))},
+			args: args{object: *NewObject(nil, *volume.NewBoxOfSize(8726.1, 0, 0, 1))},
 			want: true,
 		},
 	}

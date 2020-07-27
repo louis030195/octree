@@ -1,14 +1,13 @@
-package protometry
+package quaternion
 
 import (
-    "math"
+	"math"
 )
 
 // NewQuaternion constructs a Vector3
 func NewQuaternion(x, y, z, w float64) *Quaternion {
 	return &Quaternion{X: x, Y: y, Z: z, W: w}
 }
-
 
 // ToQuaternion ... yaw (Z), pitch (Y), roll (X)
 func ToQuaternion(yaw, pitch, roll float64) *Quaternion {

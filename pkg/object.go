@@ -1,8 +1,8 @@
 package octree
 
 import (
-	"fmt"
-    protometry "github.com/louis030195/protometry/pkg"
+    "fmt"
+    "github.com/louis030195/protometry/api/volume"
 
     "sync/atomic"
 )
@@ -44,22 +44,21 @@ func (is IdentifierSlice) Swap(i, j int) {
 	is[i], is[j] = is[j], is[i]
 }
 
-
 // Object stores data and bounds
 type Object struct {
-	id       uint64
+	id     uint64
 	Data   interface{}
-	Bounds protometry.Box
+	Bounds volume.Box
 }
 
 // NewObject is a Object constructor with bounds for ease of use
-func NewObject(data interface{}, bounds protometry.Box) *Object {
+func NewObject(data interface{}, bounds volume.Box) *Object {
 	return &Object{id: newID(), Data: data, Bounds: bounds}
 }
 
 // NewObjectCube returns a new cubic object of given size
 func NewObjectCube(data interface{}, x, y, z, size float64) *Object {
-	return NewObject(data, *protometry.NewBoxOfSize(x, y, z, size))
+	return NewObject(data, *volume.NewBoxOfSize(x, y, z, size))
 }
 
 // ID returns the unique identifier of the entity.

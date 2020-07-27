@@ -1,6 +1,7 @@
-package protometry
+package vector3
 
 import (
+    "github.com/louis030195/protometry/api/quaternion"
     "math"
     "math/rand"
 )
@@ -25,11 +26,21 @@ func NewVector3One() *Vector3 {
 	return NewVector3(1, 1, 1)
 }
 
+// NewVector3Max returns a Vector3 of maximum float64 value
+func NewVector3Max() *Vector3 {
+	return NewVector3(math.MaxFloat64, math.MaxFloat64, math.MaxFloat64)
+}
+
+// NewVector3Min returns a Vector3 of minimum float64 value
+func NewVector3Min() *Vector3 {
+	return NewVector3(-math.MaxFloat64, -math.MaxFloat64, -math.MaxFloat64)
+}
+
 // Equal reports whether a and b are equal within a small epsilon.
 func (v *Vector3) Equal(v2 Vector3) bool {
 	const epsilon = 1e-16
 
-	// If any dimensions aren't aproximately equal, return false
+	// If any dimensions aren't approximately equal, return false
 	if math.Abs(v.X-v2.X) >= epsilon ||
 		math.Abs(v.Y-v2.Y) >= epsilon ||
 		math.Abs(v.Z-v2.Z) >= epsilon {
@@ -155,13 +166,6 @@ func (v Vector3) Angle(v2 Vector3) float64 {
 	return math.Atan2(v.Cross(v2).Norm(), v.Dot(v2))
 }
 
-// In Returns whether the specified point is contained in this box.
-func (v Vector3) In(box Box) bool {
-	return (box.Min.X <= v.X && v.X <= box.Max.X) &&
-		(box.Min.Y <= v.Y && v.Y <= box.Max.Y) &&
-		(box.Min.Z <= v.Z && v.Z <= box.Max.Z)
-}
-
 // Min Returns the a vector where each component is the lesser of the
 // corresponding component in this and the specified vector.
 // Not in-place
@@ -223,9 +227,9 @@ func RandomSpherePoint(center Vector3, radius float64) Vector3 {
 }
 
 // LookAt return a quaternion corresponding to the rotation required to look at the other Vector3
-func (v Vector3) LookAt(b Vector3) Quaternion {
+func (v Vector3) LookAt(b Vector3) quaternion.Quaternion {
 	angle := v.Angle(b)
-	return *NewQuaternion(0, angle, 0, angle)
+	return *quaternion.NewQuaternion(0, angle, 0, angle)
 }
 
 // Mutate returns a new Vector3 with each coordinates multiplied by a random value between -rate and rate

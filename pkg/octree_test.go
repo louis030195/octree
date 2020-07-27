@@ -1,17 +1,16 @@
 package octree
 
 import (
-	"fmt"
-	"math"
-	"math/rand"
-	"path/filepath"
-	"reflect"
-	"runtime"
-	"sync/atomic"
-	"testing"
-
-    protometry "github.com/louis030195/protometry/pkg"
-
+    "fmt"
+    "github.com/louis030195/protometry/api/vector3"
+    "github.com/louis030195/protometry/api/volume"
+    "math"
+    "math/rand"
+    "path/filepath"
+    "reflect"
+    "runtime"
+    "sync/atomic"
+    "testing"
 )
 
 // equals fails the test if exp is not equal to act.
@@ -42,16 +41,16 @@ func ensureBalanced(tb testing.TB, n Node) bool {
 }
 
 func boilerplateTree(t *testing.T) *Octree {
-	o := NewOctree(protometry.NewBoxMinMax(1, 1, 1, 4, 4, 4))
+	o := NewOctree(volume.NewBoxMinMax(1, 1, 1, 4, 4, 4))
 	ok := o.Insert(*NewObjectCube(0, 2, 2, 3, 1))
 	equals(t, true, ok)
 	return o
 }
 
 func TestOctree_NewOctree(t *testing.T) {
-	o := NewOctree(protometry.NewBoxOfSize(0, 0, 0, 2))
+	o := NewOctree(volume.NewBoxOfSize(0, 0, 0, 2))
 	// Should be [(-1,-1,-1), (1, 1, 1)]
-	equals(t, *protometry.NewBoxMinMax(-1, -1, -1, 1, 1, 1), o.root.region)
+	equals(t, *volume.NewBoxMinMax(-1, -1, -1, 1, 1, 1), o.root.region)
 }
 
 func checkOctree(t *testing.T, o Octree, expectedObjects int) {
@@ -67,9 +66,9 @@ func checkOctree(t *testing.T, o Octree, expectedObjects int) {
 
 func TestNode_InsertRandomPosition(t *testing.T) {
 	size := math.Pow(10, 4)
-	o := NewOctree(protometry.NewBoxOfSize(0, 0, 0, size*2))
+	o := NewOctree(volume.NewBoxOfSize(0, 0, 0, size*2))
 	for i := 0.; i < size; i++ {
-		p := protometry.RandomSpherePoint(*protometry.NewVector3Zero(), size-1)
+		p := vector3.RandomSpherePoint(*vector3.NewVector3Zero(), size-1)
 		equals(t, true, o.Insert(*NewObjectCube(0, p.X, p.Y, p.Z, 1)))
 	}
 	checkOctree(t, *o, int(size))
@@ -77,70 +76,68 @@ func TestNode_InsertRandomPosition(t *testing.T) {
 
 func TestNode_InsertOutsideBounds(t *testing.T) {
 	size := math.Pow(10, 4)
-	o := NewOctree(protometry.NewBoxOfSize(0, 0, 0, size*2))
+	o := NewOctree(volume.NewBoxOfSize(0, 0, 0, size*2))
 	equals(t, false, o.Insert(*NewObjectCube(0, size, 0, 0, 1)))
 }
 
 func TestNode_GetColliding(t *testing.T) {
-	o := NewOctree(protometry.NewBoxMinMax(1, 1, 1, 4, 4, 4))
+	o := NewOctree(volume.NewBoxMinMax(1, 1, 1, 4, 4, 4))
 	equals(t, true, o.Insert(*NewObjectCube(0, 2, 2, 3, 1)))
 	equals(t, true, o.Insert(*NewObjectCube(5, 3, 3, 3, 2)))
 	equals(t, true, o.Insert(*NewObjectCube(6, 2, 2, 2, 2)))
 	equals(t, 3, len(o.root.objects))
 	equals(t, true, o.Insert(*NewObjectCube(7, 2, 2, 2, 2)))
 
-	colliders := o.GetColliding(*protometry.NewBoxMinMax(0, 0, 0, 0.9, 0.9, 0.9))
+	colliders := o.GetColliding(*volume.NewBoxMinMax(0, 0, 0, 0.9, 0.9, 0.9))
 	equals(t, 0, len(colliders))
-	colliders = o.GetColliding(*protometry.NewBoxMinMax(0, 0, 0, 1, 1, 1))
+	colliders = o.GetColliding(*volume.NewBoxMinMax(0, 0, 0, 1, 1, 1))
 	equals(t, 2, len(colliders))
-	colliders = o.GetColliding(*protometry.NewBoxMinMax(1, 1, 1, 1.1, 1.1, 1.1))
+	colliders = o.GetColliding(*volume.NewBoxMinMax(1, 1, 1, 1.1, 1.1, 1.1))
 	equals(t, 2, len(colliders))
 	equals(t, 6, colliders[0].Data)
 	equals(t, 7, colliders[1].Data)
 
 	/* * * */
-	o = NewOctree(protometry.NewBoxMinMax(-10, -10, -10, 10, 10, 10))
+	o = NewOctree(volume.NewBoxMinMax(-10, -10, -10, 10, 10, 10))
 	equals(t, true, o.Insert(*NewObjectCube(0, 0, 0, 0, 2)))
 	equals(t, true, o.Insert(*NewObjectCube(1, 0, 2, 0, 2)))
 	equals(t, true, o.Insert(*NewObjectCube(2, 0, 4, 0, 2)))
-	colliders = o.GetColliding(*protometry.NewBoxMinMax(-2, -2, -2, -1.1, -1.1, -1.1))
+	colliders = o.GetColliding(*volume.NewBoxMinMax(-2, -2, -2, -1.1, -1.1, -1.1))
 	equals(t, 0, len(colliders))
-	colliders = o.GetColliding(*protometry.NewBoxMinMax(-2, -2, -2, -1, -1, -1))
+	colliders = o.GetColliding(*volume.NewBoxMinMax(-2, -2, -2, -1, -1, -1))
 	equals(t, 1, len(colliders))
-	colliders = o.GetColliding(*protometry.NewBoxMinMax(-10, -10, -10, 10, 10, 10))
+	colliders = o.GetColliding(*volume.NewBoxMinMax(-10, -10, -10, 10, 10, 10))
 	equals(t, 3, len(colliders))
 	equals(t, 0, colliders[0].Data)
 	// Reverse
-	colliders = o.GetColliding(*protometry.NewBoxMinMax(10, 10, 10, -10, -10, -10)) // FIXME
+	colliders = o.GetColliding(*volume.NewBoxMinMax(10, 10, 10, -10, -10, -10)) // FIXME
 	equals(t, 0, len(colliders))
 }
 
 func TestNode_GetCollidingTwo(t *testing.T) {
 	size := 100.
-	o := NewOctree(protometry.NewBoxOfSize(0, 0, 0, size*2))
+	o := NewOctree(volume.NewBoxOfSize(0, 0, 0, size*2))
 	for i := 0.; i < size; i++ {
-		p := protometry.RandomSpherePoint(*protometry.NewVector3Zero(), size-1)
+		p := vector3.RandomSpherePoint(*vector3.NewVector3Zero(), size-1)
 		equals(t, true, o.Insert(*NewObjectCube(0, p.X, p.Y, p.Z, 1)))
 	}
 	equals(t, int(size), o.getNumberOfObjects())
-	equals(t, int(size), len(o.GetColliding(*protometry.NewBoxOfSize(0, 0, 0, size*2))))
+	equals(t, int(size), len(o.GetColliding(*volume.NewBoxOfSize(0, 0, 0, size*2))))
 }
-
 
 func TestNode_GetCollidingThree(t *testing.T) {
 	size := 100.
-	o := NewOctree(protometry.NewBoxOfSize(0, 0, 0, size*2))
+	o := NewOctree(volume.NewBoxOfSize(0, 0, 0, size*2))
 	for i := 0.; i < size; i++ {
-		p := protometry.RandomSpherePoint(*protometry.NewVector3Zero(), size-1)
+		p := vector3.RandomSpherePoint(*vector3.NewVector3Zero(), size-1)
 		equals(t, true, o.Insert(*NewObjectCube(0, p.X, p.Y, p.Z, 1)))
 	}
 	equals(t, int(size), o.getNumberOfObjects())
 
 	// It's random insertion so it might not work always ...
-	equals(t, true, int(size) / 4 > len(o.GetColliding(*protometry.NewBoxOfSize(0, 0, 0, size))))
-	equals(t, 0, len(o.GetColliding(*protometry.NewBoxOfSize(size*2, size*2, size*2, size))))
+	equals(t, true, int(size)/4 > len(o.GetColliding(*volume.NewBoxOfSize(0, 0, 0, size))))
+	equals(t, 0, len(o.GetColliding(*volume.NewBoxOfSize(size*2, size*2, size*2, size))))
 }
-
 
 func TestOctree_Remove(t *testing.T) {
 	o := boilerplateTree(t)
@@ -155,7 +152,7 @@ func TestOctree_Remove(t *testing.T) {
 
 	// New octree
 	size := 1000.
-	o = NewOctree(protometry.NewBoxOfSize(0, 0, 0, size*2))
+	o = NewOctree(volume.NewBoxOfSize(0, 0, 0, size*2))
 	var objects []Object
 	for i := 1.; i < size; i++ {
 		myObj = NewObjectCube(0, i, i, i, 2)
@@ -169,7 +166,7 @@ func TestOctree_Remove(t *testing.T) {
 	}
 	equals(t, 0, o.getNumberOfObjects())
 	equals(t, 1, o.getNumberOfNodes()) // Only root left
-	o = NewOctree(protometry.NewBoxOfSize(0, 0, 0, size*2))
+	o = NewOctree(volume.NewBoxOfSize(0, 0, 0, size*2))
 	objects = []Object{}
 	for i := 0.; i < 9; i++ {
 		myObj = NewObjectCube(0, i, i, i, 2)
@@ -193,7 +190,7 @@ func TestOctree_Remove(t *testing.T) {
 
 func TestOctree_RemoveInChildrenAndMerge(t *testing.T) {
 	size := 100.
-	o := NewOctree(protometry.NewBoxOfSize(0, 0, 0, size*2))
+	o := NewOctree(volume.NewBoxOfSize(0, 0, 0, size*2))
 	var nilChildren *[8]Node
 	// No children
 	equals(t, true, nilChildren == o.root.children)
@@ -215,7 +212,7 @@ func TestOctree_RemoveInChildrenAndMerge(t *testing.T) {
 
 func TestOctree_RemoveObjectIntersectingMultipleNodes(t *testing.T) {
 	size := 100.
-	o := NewOctree(protometry.NewBoxOfSize(0, 0, 0, size*2))
+	o := NewOctree(volume.NewBoxOfSize(0, 0, 0, size*2))
 	var nilChildren *[8]Node
 	// No children
 	equals(t, true, nilChildren == o.root.children)
@@ -230,19 +227,14 @@ func TestOctree_RemoveObjectIntersectingMultipleNodes(t *testing.T) {
 }
 
 func TestOctree_Move(t *testing.T) {
-	o := NewOctree(protometry.NewBoxOfSize(0, 0, 0, 20))
+	o := NewOctree(volume.NewBoxOfSize(0, 0, 0, 20))
 	myObj := NewObjectCube(0, 0, 0, 0, 2)
-	equals(t, true, protometry.NewBoxMinMax(-1, -1, -1, 1, 1, 1).Equal(myObj.Bounds))
+	equals(t, true, volume.NewBoxMinMax(-1, -1, -1, 1, 1, 1).Equal(myObj.Bounds))
 	equals(t, true, o.Insert(*myObj))
 	equals(t, 1, o.getNumberOfObjects())
-	// Using Bounds
-	equals(t, true, o.Move(myObj, 0, 0, 0, 2, 2, 2))
-	x := protometry.NewBoxMinMax(0, 0, 0, 2, 2, 2)
+	equals(t, true, o.Move(myObj, 1, 1, 1))
+	x := volume.NewBoxMinMax(0, 0, 0, 2, 2, 2)
 	equals(t, true, x.Equal(myObj.Bounds))
-	equals(t, 1, o.getNumberOfObjects())
-	// Using position
-	equals(t, true, o.Move(myObj, 3, 3, 3))
-	equals(t, true, protometry.NewBoxMinMax(2, 2, 2, 4, 4, 4).Equal(myObj.Bounds))
 	equals(t, 1, o.getNumberOfObjects())
 
 	// Try to move removed object
@@ -250,26 +242,24 @@ func TestOctree_Move(t *testing.T) {
 	equals(t, false, o.Move(myObj, 3, 3, 3))
 	equals(t, 0, o.getNumberOfObjects())
 
-
 	// Try to move object outside octree bounds
 	equals(t, true, o.Insert(*myObj))
 	equals(t, 1, o.getNumberOfObjects())
 	equals(t, true, o.Move(myObj, 3, 3, 4))
-	equals(t, true, protometry.NewBoxMinMax(2, 2, 3, 4, 4, 5).Equal(myObj.Bounds))
+	equals(t, true, volume.NewBoxMinMax(2, 2, 3, 4, 4, 5).Equal(myObj.Bounds))
 	// Hand moved outside octree bounds
-	myObj.Bounds = *protometry.NewBoxMinMax(99999999, -1, -1, 1, 1, 1)
+	myObj.Bounds = *volume.NewBoxMinMax(99999999, -1, -1, 1, 1, 1)
 	equals(t, false, o.Move(myObj, 3, 3, 3))
-	myObj.Bounds = *protometry.NewBoxMinMax(-1, -1, -1, 1, 1, 1)
+	myObj.Bounds = *volume.NewBoxMinMax(-1, -1, -1, 1, 1, 1)
 	equals(t, true, o.Move(myObj, 3, 3, 3))
 	equals(t, false, o.Move(myObj, 999999999, 3, 3))
-
 
 	// Try random moves at scale
 	s := 100.
 	o = octreeRandomInsertions(t, s)
 	o.Range(func(object *Object) bool {
 		// Move randomly all objects
-		p :=  protometry.RandomSpherePoint(*protometry.NewVector3Zero(), s/2)
+		p := vector3.RandomSpherePoint(*vector3.NewVector3Zero(), s/2)
 		equals(t, true, o.Move(object, p.X, p.Y, p.Z))
 		checkOctree(t, *o, int(s))
 		return true
@@ -277,13 +267,13 @@ func TestOctree_Move(t *testing.T) {
 }
 
 func TestOctree_MoveIncorrectDims(t *testing.T) {
-	o := NewOctree(protometry.NewBoxOfSize(0, 0, 0, 20))
+	o := NewOctree(volume.NewBoxOfSize(0, 0, 0, 20))
 	myObj := NewObjectCube(0, 0, 0, 0, 2)
-	equals(t, *protometry.NewBoxMinMax(-1, -1, -1, 1, 1, 1), myObj.Bounds)
+	equals(t, *volume.NewBoxMinMax(-1, -1, -1, 1, 1, 1), myObj.Bounds)
 	equals(t, true, o.Insert(*myObj))
 	equals(t, 1, o.getNumberOfObjects())
 	equals(t, false, o.Move(myObj, 0, 0, 0, 2, 2))
-	equals(t, *protometry.NewBoxMinMax(-1, -1, -1, 1, 1, 1), myObj.Bounds)
+	equals(t, *volume.NewBoxMinMax(-1, -1, -1, 1, 1, 1), myObj.Bounds)
 	equals(t, 1, o.getNumberOfObjects())
 }
 
@@ -294,9 +284,8 @@ func TestOctree_GetAllObjects(t *testing.T) {
 	}
 }
 
-
 func TestOctree_Range(t *testing.T) {
-	o := NewOctree(protometry.NewBoxOfSize(0, 0, 0, 100))
+	o := NewOctree(volume.NewBoxOfSize(0, 0, 0, 100))
 
 	objs := []Object{
 		*NewObjectCube(0, 12, 12, 12, 1),
@@ -333,9 +322,9 @@ func TestOctree_Range(t *testing.T) {
 
 	// Asserting that we can iterate all objects' tree even after been split into children
 	objs = []Object{}
-	o = NewOctree(protometry.NewBoxOfSize(0, 0, 0, 200))
+	o = NewOctree(volume.NewBoxOfSize(0, 0, 0, 200))
 	for i := 0; i < 100; i++ {
-		p := protometry.RandomSpherePoint(*protometry.NewVector3Zero(), 99)
+		p := vector3.RandomSpherePoint(*vector3.NewVector3Zero(), 99)
 		obj := NewObjectCube(i, p.X, p.Y, p.Z, 1)
 		equals(t, true, o.Insert(*obj))
 		objs = append(objs, *obj)
@@ -370,12 +359,10 @@ func TestOctree_Range(t *testing.T) {
 	equals(t, 0, len(objs))
 }
 
-
-
 func octreeRandomInsertions(t testing.TB, treeSize float64) *Octree {
-	o := NewOctree(protometry.NewBoxOfSize(0, 0, 0, treeSize*2))
+	o := NewOctree(volume.NewBoxOfSize(0, 0, 0, treeSize*2))
 	for i := 0.; i < treeSize; i++ {
-		p := protometry.RandomSpherePoint(*protometry.NewVector3Zero(), treeSize-1)
+		p := vector3.RandomSpherePoint(*vector3.NewVector3Zero(), treeSize-1)
 		equals(t, true, o.Insert(*NewObjectCube(0, p.X, p.Y, p.Z, 1)))
 	}
 	return o
@@ -392,10 +379,10 @@ func TestOctree_Get(t *testing.T) {
 	// Reset id counter atomic
 	atomic.StoreUint64(&idInc, 0)
 	treeSize := 1000.
-	o := NewOctree(protometry.NewBoxOfSize(0, 0, 0, treeSize*2))
+	o := NewOctree(volume.NewBoxOfSize(0, 0, 0, treeSize*2))
 	var objects []Object
 	for i := 0.; i < treeSize; i++ {
-		p := protometry.RandomSpherePoint(*protometry.NewVector3Zero(), treeSize-1)
+		p := vector3.RandomSpherePoint(*vector3.NewVector3Zero(), treeSize-1)
 		myObj := NewObjectCube(0, p.X, p.Y, p.Z, 1)
 		objects = append(objects, *myObj)
 		equals(t, true, o.Insert(*myObj))
@@ -403,7 +390,7 @@ func TestOctree_Get(t *testing.T) {
 	// Creating a box slightly bigger where this object can fit
 	bFiveHundred := objects[500].Bounds.GetCenter()
 	bFiveHundredSize := objects[500].Bounds.GetSize().Sum()
-	b := protometry.NewBoxOfSize(bFiveHundred.X, bFiveHundred.Y, bFiveHundred.Z, (bFiveHundredSize/3)*4)
+	b := volume.NewBoxOfSize(bFiveHundred.X, bFiveHundred.Y, bFiveHundred.Z, (bFiveHundredSize/3)*4)
 	// Ensure that it fit
 	equals(t, true, objects[500].Bounds.Fit(*b))
 	// ID start at 1, check that it's found
@@ -417,13 +404,13 @@ func TestOctree_Get(t *testing.T) {
 func TestOctree_GetSize(t *testing.T) {
 	for i := 0.; i < 100; i++ {
 		o := octreeRandomInsertions(t, i)
-		equals(t, int(i), o.GetSize()/2)
+		equals(t, int64(i), o.GetSize()/2)
 	}
 }
 
 func TestOctree_GetHeight(t *testing.T) {
 	size := 1000.
-	o := NewOctree(protometry.NewBoxOfSize(0, 0, 0, size*2))
+	o := NewOctree(volume.NewBoxOfSize(0, 0, 0, size*2))
 	for i := 0.; i < size; i++ {
 		equals(t, true, o.Insert(*NewObjectCube(0, i, i, i, 2)))
 	}
@@ -432,7 +419,7 @@ func TestOctree_GetHeight(t *testing.T) {
 
 func TestOctree_GetNumberOfNodes(t *testing.T) {
 	size := 1000.
-	o := NewOctree(protometry.NewBoxOfSize(0, 0, 0, size*2))
+	o := NewOctree(volume.NewBoxOfSize(0, 0, 0, size*2))
 	for i := 0.; i < size; i++ {
 		equals(t, true, o.Insert(*NewObjectCube(0, i, i, i, 2)))
 	}
@@ -441,7 +428,7 @@ func TestOctree_GetNumberOfNodes(t *testing.T) {
 
 func TestOctree_GetNumberOfObjects(t *testing.T) {
 	size := 1000.
-	o := NewOctree(protometry.NewBoxOfSize(0, 0, 0, size*2))
+	o := NewOctree(volume.NewBoxOfSize(0, 0, 0, size*2))
 	for i := 0.; i < size; i++ {
 		equals(t, true, o.Insert(*NewObjectCube(0, i, i, i, 2)))
 	}
@@ -450,7 +437,7 @@ func TestOctree_GetNumberOfObjects(t *testing.T) {
 
 func TestOctree_GetUsage(t *testing.T) {
 	size := 1000.
-	o := NewOctree(protometry.NewBoxOfSize(0, 0, 0, size*2))
+	o := NewOctree(volume.NewBoxOfSize(0, 0, 0, size*2))
 	for i := 0.; i < size; i++ {
 		equals(t, true, o.Insert(*NewObjectCube(0, i, i, i, 2)))
 	}
@@ -460,7 +447,7 @@ func TestOctree_GetUsage(t *testing.T) {
 
 func TestOctree_ToString(t *testing.T) {
 	size := 20.
-	o := NewOctree(protometry.NewBoxOfSize(0, 0, 0, size*2))
+	o := NewOctree(volume.NewBoxOfSize(0, 0, 0, size*2))
 	for i := 0.; i < size; i++ {
 		equals(t, true, o.Insert(*NewObjectCube(0, i, i, i, 2)))
 	}
@@ -472,10 +459,10 @@ func bNode_InsertRandomPosition(b *testing.B, capacity int) {
 	CAPACITY = capacity
 	size := float64(b.N)
 	rand.Seed(int64(b.N))
-	o := NewOctree(protometry.NewBoxOfSize(0, 0, 0, size*2))
+	o := NewOctree(volume.NewBoxOfSize(0, 0, 0, size*2))
 	b.ResetTimer()
 	for i := 1.; i < size; i++ {
-		p := protometry.RandomSpherePoint(*protometry.NewVector3Zero(), size-1)
+		p := vector3.RandomSpherePoint(*vector3.NewVector3Zero(), size-1)
 		equals(b, true, o.Insert(*NewObjectCube(0, p.X, p.Y, p.Z,
 			1)))
 	}
@@ -497,26 +484,26 @@ func BenchmarkNode_InsertRandomPositionCapacity50(b *testing.B) {
 func BenchmarkNode_GetCollidingFullRandom(b *testing.B) {
 	size := float64(b.N)
 	rand.Seed(int64(b.N))
-	o := NewOctree(protometry.NewBoxOfSize(0, 0, 0, size*2))
+	o := NewOctree(volume.NewBoxOfSize(0, 0, 0, size*2))
 	for i := 1.; i < size; i++ {
-		p := protometry.RandomSpherePoint(*protometry.NewVector3Zero(), size-1)
+		p := vector3.RandomSpherePoint(*vector3.NewVector3Zero(), size-1)
 		equals(b, true, o.Insert(*NewObjectCube(0, p.X, p.Y, p.Z,
 			1)))
 	}
 	b.ResetTimer()
 	for i := 1.; i < size; i++ {
-		p := protometry.RandomSpherePoint(*protometry.NewVector3Zero(), size-1)
-		o.GetColliding(*protometry.NewBoxOfSize(p.X, p.Y, p.Z, rand.ExpFloat64()/size))
+		p := vector3.RandomSpherePoint(*vector3.NewVector3Zero(), size-1)
+		o.GetColliding(*volume.NewBoxOfSize(p.X, p.Y, p.Z, rand.ExpFloat64()/size))
 	}
 }
 
 func BenchmarkNode_RemoveRandomPosition(b *testing.B) {
 	size := float64(b.N)
 	rand.Seed(int64(b.N))
-	o := NewOctree(protometry.NewBoxOfSize(0, 0, 0, size*2))
+	o := NewOctree(volume.NewBoxOfSize(0, 0, 0, size*2))
 	var objects []Object
 	for i := 1.; i < size; i++ {
-		p := protometry.RandomSpherePoint(*protometry.NewVector3Zero(), size-1)
+		p := vector3.RandomSpherePoint(*vector3.NewVector3Zero(), size-1)
 		ob := NewObjectCube(0, p.X, p.Y, p.Z, 1)
 		equals(b, true, o.Insert(*ob))
 		objects = append(objects, *ob)
@@ -530,10 +517,10 @@ func BenchmarkNode_RemoveRandomPosition(b *testing.B) {
 func BenchmarkNode_MoveRandomPosition(b *testing.B) {
 	size := float64(b.N)
 	rand.Seed(int64(b.N))
-	o := NewOctree(protometry.NewBoxOfSize(0, 0, 0, size*4)) // x4 because moving ++
+	o := NewOctree(volume.NewBoxOfSize(0, 0, 0, size*4)) // x4 because moving ++
 	var objects []Object
 	for i := 0.; i < size; i++ {
-		p := protometry.RandomSpherePoint(*protometry.NewVector3Zero(), size-1)
+		p := vector3.RandomSpherePoint(*vector3.NewVector3Zero(), size-1)
 		ob := NewObjectCube(0, p.X, p.Y, p.Z, 1)
 		equals(b, true, o.Insert(*ob))
 		objects = append(objects, *ob)
@@ -541,7 +528,7 @@ func BenchmarkNode_MoveRandomPosition(b *testing.B) {
 	b.ResetTimer()
 	for i := 0.; i < size-1; i++ {
 		ob := objects[int(i)]
-		p := protometry.RandomSpherePoint(*protometry.NewVector3Zero(), size-1)
+		p := vector3.RandomSpherePoint(*vector3.NewVector3Zero(), size-1)
 		equals(b, true, o.Move(&ob, p.X, p.Y, p.Z))
 	}
 }

@@ -1,9 +1,8 @@
 package octree
 
 import (
-	"fmt"
-    protometry "github.com/louis030195/protometry/pkg"
-
+    "fmt"
+    "github.com/louis030195/protometry/api/volume"
 )
 
 // Octree ...
@@ -12,7 +11,7 @@ type Octree struct {
 }
 
 // NewOctree is a Octree constructor for ease of use
-func NewOctree(region *protometry.Box) *Octree {
+func NewOctree(region *volume.Box) *Octree {
 	return &Octree{
 		root: &Node{region: *region},
 	}
@@ -23,10 +22,9 @@ func (o *Octree) Insert(object Object) bool {
 	return o.root.insert(object)
 }
 
-
 // Move object to a new Bounds, pass a pointer because we want to modify the passed object data
-func (o *Octree) Move(object *Object, newBounds ...float64) bool {
-	return o.root.move(object, newBounds...)
+func (o *Octree) Move(object *Object, newPosition ...float64) bool {
+	return o.root.move(object, newPosition...)
 }
 
 // Remove object
@@ -36,7 +34,7 @@ func (o *Octree) Remove(object Object) bool {
 
 // GetColliding returns an array of objects that intersect with the specified bounds, if any.
 // Otherwise returns an empty array.
-func (o *Octree) GetColliding(bounds protometry.Box) []Object {
+func (o *Octree) GetColliding(bounds volume.Box) []Object {
 	return o.root.getColliding(bounds)
 }
 
@@ -53,7 +51,7 @@ func (o *Octree) Range(f func(*Object) bool) {
 }
 
 // Get will try to find a specific object based on an id
-func (o *Octree) Get(id uint64, box protometry.Box) *Object {
+func (o *Octree) Get(id uint64, box volume.Box) *Object {
 	objs := o.GetColliding(box)
 	for _, obj := range objs {
 		if id == obj.ID() {
@@ -64,9 +62,9 @@ func (o *Octree) Get(id uint64, box protometry.Box) *Object {
 }
 
 // GetSize returns the size of the Octree (cubic volume)
-func (o *Octree) GetSize() int {
+func (o *Octree) GetSize() int64 {
 	s := o.root.region.GetSize()
-	return int(s.X)
+    return int64(s.X)
 }
 
 // GetNodes flatten all the nodes into an array, the returned array is sorted in the DFS order
@@ -95,5 +93,5 @@ func (o *Octree) getUsage() float64 {
 }
 
 func (o *Octree) toString(verbose bool) string {
-	return fmt.Sprintf( "Octree: {\n%v\n}", o.root.toString(verbose))
+	return fmt.Sprintf("Octree: {\n%v\n}", o.root.toString(verbose))
 }

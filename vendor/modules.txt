@@ -1,6 +1,8 @@
 # github.com/golang/protobuf v1.3.5
 ## explicit
 github.com/golang/protobuf/proto
-# github.com/louis030195/protometry v0.0.0-20200719140430-a9373ebf9d14
+# github.com/louis030195/protometry v0.0.0-20200729072249-534cf8dbbc1f
 ## explicit
-github.com/louis030195/protometry/pkg
+github.com/louis030195/protometry/api/quaternion
+github.com/louis030195/protometry/api/vector3
+github.com/louis030195/protometry/api/volume

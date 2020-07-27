@@ -2,7 +2,7 @@ package octree
 
 import (
 	"fmt"
-	protometry "github.com/louis030195/protometry/pkg"
+    "github.com/louis030195/protometry/api/volume"
 )
 
 // FIXME
@@ -13,7 +13,7 @@ var (
 // Node ...
 type Node struct {
 	objects  []Object
-	region   protometry.Box
+	region   volume.Box
 	children *[8]Node
 }
 
@@ -85,7 +85,7 @@ func (n *Node) remove(object Object) bool {
 	return false
 }
 
-func (n *Node) getColliding(bounds protometry.Box) []Object {
+func (n *Node) getColliding(bounds volume.Box) []Object {
 	// If current node region entirely fit inside desired Bounds,
 	// No need to search somewhere else => return all objects
 	if n.region.Fit(bounds) {
@@ -179,29 +179,19 @@ func (n *Node) merge() bool {
 	return false
 }
 
-func (n *Node) move(object *Object, newBounds ...float64) bool {
-	// Incorrect dimensions
-	if (len(newBounds) != 3 && len(newBounds) != 6) || !n.remove(*object) {
+func (n *Node) move(object *Object, newPosition ...float64) bool {
+	// Can't find it
+	if len(newPosition) != 3 || !n.remove(*object) {
 		return false
 	}
-	if len(newBounds) == 3 {
-		size := object.Bounds.GetSize().Times(0.5)
-		object.Bounds.Min.X = newBounds[0] - size.X
-		object.Bounds.Min.Y = newBounds[1] - size.Y
-		object.Bounds.Min.Z = newBounds[2] - size.Z
+	s := object.Bounds.GetSize().Times(0.5)
+	object.Bounds.Max.X = newPosition[0] + s.X
+	object.Bounds.Max.Y = newPosition[1] + s.Y
+	object.Bounds.Max.Z = newPosition[2] + s.Z
 
-		object.Bounds.Max.X = newBounds[0] + size.X
-		object.Bounds.Max.Y = newBounds[1] + size.Y
-		object.Bounds.Max.Z = newBounds[2] + size.Z
-	} else { // Dimensions = 6
-		object.Bounds.Min.X = newBounds[0]
-		object.Bounds.Min.Y = newBounds[1]
-		object.Bounds.Min.Z = newBounds[2]
-
-		object.Bounds.Max.X = newBounds[3]
-		object.Bounds.Max.Y = newBounds[4]
-		object.Bounds.Max.Z = newBounds[5]
-	}
+	object.Bounds.Min.X = newPosition[0] - s.X
+	object.Bounds.Min.Y = newPosition[1] - s.Y
+	object.Bounds.Min.Z = newPosition[2] - s.Z
 	return n.insert(*object)
 }
 
@@ -227,7 +217,7 @@ func (n *Node) getNodes() []Node {
 }
 
 // GetRegion is used for debugging visualisation outside octree package
-func (n *Node) GetRegion() protometry.Box {
+func (n *Node) GetRegion() volume.Box {
 	return n.region
 }
 

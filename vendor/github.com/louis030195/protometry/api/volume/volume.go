@@ -1,5 +1,4 @@
-package protometry
-
+package volume
 
 // Volume is a 3-d interface representing volumes like Boxes, Spheres, Capsules ...
 type Volume interface {

@@ -1,18 +1,22 @@
-package protometry
+package volume
+
+import (
+    "github.com/louis030195/protometry/api/vector3"
+)
 
 // NewBoxMinMax returns a new box using min max
 func NewBoxMinMax(minX, minY, minZ, maxX, maxY, maxZ float64) *Box {
 	return &Box{
-		Min: NewVector3(minX, minY, minZ),
-		Max: NewVector3(maxX, maxY, maxZ),
+		Min: vector3.NewVector3(minX, minY, minZ),
+		Max: vector3.NewVector3(maxX, maxY, maxZ),
 	}
 }
 
 // NewBoxOfSize returns a box of size centered at center
 func NewBoxOfSize(x, y, z, size float64) *Box {
-	half := size/2
-	min := *NewVector3(x-half, y-half, z-half)
-	max := *NewVector3(x+half, y+half, z+half)
+	half := size / 2
+	min := *vector3.NewVector3(x-half, y-half, z-half)
+	max := *vector3.NewVector3(x+half, y+half, z+half)
 	return &Box{
 		Min: &min,
 		Max: &max,
@@ -25,25 +29,31 @@ func (b Box) Equal(other Box) bool {
 }
 
 // GetCenter ...
-func (b Box) GetCenter() Vector3 {
+func (b Box) GetCenter() vector3.Vector3 {
 	return *b.Min.Lerp(b.Max, 0.5)
 }
 
 // GetSize returns the size of the box
-func (b *Box) GetSize() Vector3 {
+func (b *Box) GetSize() vector3.Vector3 {
 	return b.Max.Minus(*b.Min)
+}
+
+// In Returns whether the specified point is contained in this box.
+func (b Box) Contains(v vector3.Vector3) bool {
+	return (b.Min.X <= v.X && v.X <= b.Max.X) &&
+		(b.Min.Y <= v.Y && v.Y <= b.Max.Y) &&
+		(b.Min.Z <= v.Z && v.Z <= b.Max.Z)
 }
 
 // Fit Returns whether the specified area is fully contained in the other area.
 func (b Box) Fit(o Box) bool {
-	return b.Max.In(o) && b.Min.In(o)
+	return o.Contains(*b.Max) && o.Contains(*b.Min)
 }
 
 // Intersects Returns whether any portion of this area intersects with the specified area or reversely.
 func (b Box) Intersects(b2 Box) bool {
 	return !(b.Max.X < b2.Min.X || b2.Max.X < b.Min.X || b.Max.Y < b2.Min.Y || b2.Max.Y < b.Min.Y || b.Max.Z < b2.Min.Z || b2.Max.Z < b.Min.Z)
 }
-
 
 /* Split split a CUBE into 8 cubes
  *    3____7
@@ -67,17 +77,17 @@ func (b *Box) Split() [8]*Box {
 }
 
 // Grows the Bounds to include the point. In-place and returns itself
-func (b *Box) EncapsulatePoint(o Vector3) *Box {
-    min := Min(*b.Min, o)
-    max := Max(*b.Max, o)
-    b.Min = &min
-    b.Max = &max
-    return b
+func (b *Box) EncapsulatePoint(o vector3.Vector3) *Box {
+	min := vector3.Min(*b.Min, o)
+	max := vector3.Max(*b.Max, o)
+	b.Min = &min
+	b.Max = &max
+	return b
 }
 
 // Grows the Bounds to include the bounds. In-place and returns itself
 func (b *Box) EncapsulateBox(o Box) *Box {
-    b.EncapsulatePoint(*o.Min)
-    b.EncapsulatePoint(*o.Max)
-    return b
+	b.EncapsulatePoint(*o.Min)
+	b.EncapsulatePoint(*o.Max)
+	return b
 }
