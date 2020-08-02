@@ -37,7 +37,7 @@ func NewVector3Min() *Vector3 {
 }
 
 // Equal reports whether a and b are equal within a small epsilon.
-func (v *Vector3) Equal(v2 Vector3) bool {
+func (v Vector3) Equal(v2 Vector3) bool {
 	const epsilon = 1e-16
 
 	// If any dimensions aren't approximately equal, return false

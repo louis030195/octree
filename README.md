@@ -1,7 +1,7 @@
 # octree
 
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/3aa076e74fce4e80af0e694116444410)](https://app.codacy.com/gh/louis030195/octree?utm_source=github.com&utm_medium=referral&utm_content=louis030195/octree&utm_campaign=Badge_Grade_Dashboard)
-[![PkgGoDev](https://pkg.go.dev/badge/louis030195/octree)](https://pkg.go.dev/louis030195/octree)
+[![PkgGoDev](https://pkg.go.dev/badge/louis030195/octree)](https://pkg.go.dev/github.com/louis030195/octree)
 ![octree](docs/octree.png)
 
 ## Installation

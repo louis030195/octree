@@ -37,6 +37,8 @@ github.com/louis030195/protometry v0.0.0-20200727154827-09d9cad921a4 h1:36iCH4PN
 github.com/louis030195/protometry v0.0.0-20200727154827-09d9cad921a4/go.mod h1:i7DnTgINVGQTs5/1IwDYaK3YpyhgOjBb8T37mmqkw1c=
 github.com/louis030195/protometry v0.0.0-20200729072249-534cf8dbbc1f h1:D9rjqqT1DuaE29kW28OVi40rS7BONtOZmJ9sTKfWnxk=
 github.com/louis030195/protometry v0.0.0-20200729072249-534cf8dbbc1f/go.mod h1:i7DnTgINVGQTs5/1IwDYaK3YpyhgOjBb8T37mmqkw1c=
+github.com/louis030195/protometry v0.1.0 h1:rRs+1uIJkEH6t0TITFwg8edhj8Lfaa8XEfn+bQMSdIU=
+github.com/louis030195/protometry v0.1.0/go.mod h1:i7DnTgINVGQTs5/1IwDYaK3YpyhgOjBb8T37mmqkw1c=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=
 github.com/stretchr/testify v1.5.1/go.mod h1:5W2xD1RspED5o8YsWQXVCued0rvSQ+mT+I5cxcmMvtA=
