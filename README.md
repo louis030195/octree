@@ -2,6 +2,13 @@
 
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/3aa076e74fce4e80af0e694116444410)](https://app.codacy.com/gh/louis030195/octree?utm_source=github.com&utm_medium=referral&utm_content=louis030195/octree&utm_campaign=Badge_Grade_Dashboard)
 [![PkgGoDev](https://pkg.go.dev/badge/louis030195/octree)](https://pkg.go.dev/github.com/louis030195/octree)
+
+Imagine, someday, you lose your wallet.  
+You remember having it until you came back home by driving.  
+You will therefore search for your wallet around your car, you won't search the whole universe to find your wallet, 
+logic no ?  
+That's the principle of an Octree data structure.
+
 ![octree](docs/octree.png)
 
 ## Installation
@@ -16,7 +23,7 @@ go get -u github.com/louis030195/octree
 package main
 
 import (
-	octree "github.com/louis030195/octree/pkg"
+    octree "github.com/louis030195/octree/pkg"
     "github.com/louis030195/protometry/api/volume"
     "log"
 )
